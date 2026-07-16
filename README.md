@@ -1,2 +1,27 @@
-# restaurant-reservation-system
-Reservation management system for a local restaurant
+# 飲食店向け予約管理システム
+
+個人経営の飲食店で利用する予約管理システムです。
+
+## 開発背景
+
+現在、電話で受けた予約を紙やカレンダーで管理しています。
+
+本プロジェクトでは、その予約管理をiPadで行えるようにし、席の利用状況や予約状況を分かりやすく可視化することで、予約管理の効率化を目指します。
+
+## 使用技術
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- FastAPI
+- Supabase
+
+## ドキュメント
+
+- requirements.md（要件定義）
+- ui.md（画面設計）
+- database.md（データベース設計）
+
+## 開発状況
+
+🚧 開発中

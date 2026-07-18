@@ -1,10 +1,14 @@
+import DateNavigator from "@/components/DateNavigator";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-100 p-8">
       <h1 className="mb-6 text-4xl font-bold">
         飲食店予約管理システム
       </h1>
-
+      
+      <DateNavigator />
+      
       <p className="mb-8 text-xl">
         📅 2026/07/18
       </p>

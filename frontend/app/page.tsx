@@ -8,10 +8,7 @@ export default function Home() {
       </h1>
       
       <DateNavigator />
-      
-      <p className="mb-8 text-xl">
-        📅 2026/07/18
-      </p>
+
 
       <h2 className="mb-4 text-2xl font-semibold">
         テーブル席

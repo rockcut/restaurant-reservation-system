@@ -19,6 +19,17 @@ export default function DateNavigator() {
     setSelectedDate(date.toISOString().split("T")[0]);
   };
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+
+  const week = ["日", "月", "火", "水", "木", "金", "土"];
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}/${month}/${day}（${week[date.getDay()]}）`;
+};
 
   return (
     <div className="mb-8 flex flex-col items-center gap-3">
@@ -31,7 +42,7 @@ export default function DateNavigator() {
       </button>
 
         <h2 className="text-2xl font-bold">
-          {selectedDate}
+          {formatDate(selectedDate)}
         </h2>
 
         <button 

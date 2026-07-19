@@ -30,6 +30,8 @@ export default function Home() {
         </div>
 
         <div className="flex gap-4">
+          <div className="h-24 w-24"></div>
+
           <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-red-500 text-2xl font-bold text-white">
             5
           </div>

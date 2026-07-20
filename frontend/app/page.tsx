@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import DateNavigator from "@/components/DateNavigator";
+import ReservationForm from "@/components/ReservationForm";
 
 export default function Home() {
 
@@ -91,6 +92,8 @@ export default function Home() {
       <button className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700">
         ＋予約を追加
       </button>
+
+      <ReservationForm />
     </main>
   );
 }

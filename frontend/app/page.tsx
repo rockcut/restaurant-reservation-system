@@ -7,6 +7,7 @@ import ReservationForm from "@/components/ReservationForm";
 export default function Home() {
 
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
@@ -89,11 +90,18 @@ export default function Home() {
         {selectedSeat === null ? "なし" : `${selectedSeat}番席`}
       </p>
 
-      <button className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700">
+    <button
+        onClick={() => setShowForm(true)}
+        className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700"
+      >
         ＋予約を追加
       </button>
 
-      <ReservationForm />
+      {showForm && (
+        <ReservationForm
+          onCancel={() => setShowForm(false)}
+        />
+      )}
     </main>
   );
 }

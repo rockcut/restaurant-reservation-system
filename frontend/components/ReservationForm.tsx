@@ -4,13 +4,23 @@ import { useState } from "react";
 
 type ReservationFormProps = {
   onCancel: () => void;
+  onSave: (data: {
+    name: string;
+    people: number;
+    time: string;
+  }) => void;
 };
 
 export default function ReservationForm({
   onCancel,
+  onSave,
 }: ReservationFormProps) {
   
     const [plate, setPlate] = useState("");
+
+    const [name, setName] = useState("");
+    const [people, setPeople] = useState(1);
+    const [time, setTime] = useState("");
 
     return (
     <div className="mt-8 rounded-lg border bg-white p-6 shadow">
@@ -24,6 +34,8 @@ export default function ReservationForm({
 
       <input
         type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         className="mb-4 w-full rounded-lg border px-4 py-2"
       />
 
@@ -33,18 +45,20 @@ export default function ReservationForm({
       </label>
 
       <select
+        value={people}
+        onChange={(e) => setPeople(Number(e.target.value))}
         className="mb-4 w-full rounded-lg border px-4 py-2"
       >
-        <option>1人</option>
-        <option>2人</option>
-        <option>3人</option>
-        <option>4人</option>
-        <option>5人</option>
-        <option>6人</option>
-        <option>7人</option>
-        <option>8人</option>
-        <option>9人</option>
-        <option>10人</option>
+        <option value={1}>1人</option>
+        <option value={2}>2人</option>
+        <option value={3}>3人</option>
+        <option value={4}>4人</option>
+        <option value={5}>5人</option>
+        <option value={6}>6人</option>
+        <option value={7}>7人</option>
+        <option value={8}>8人</option>
+        <option value={9}>9人</option>
+        <option value={10}>10人</option>
 
       </select>
 
@@ -54,6 +68,8 @@ export default function ReservationForm({
 
       <input
         type="time"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
         className="mb-4 w-full rounded-lg border px-4 py-2"
       />
 
@@ -162,7 +178,14 @@ export default function ReservationForm({
           </button>
 
           <button
-            type="submit"
+            type="button"
+            onClick={() =>
+              onSave({
+                name,
+                people,
+                time,
+              })
+            }
             className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
           >
             保存

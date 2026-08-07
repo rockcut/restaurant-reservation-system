@@ -52,7 +52,11 @@ export default function Home() {
           <div
             onClick={() => setSelectedSeat(1)}
             className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 1 ? "bg-blue-500" : "bg-green-500"
+              selectedSeat === 1
+                 ? "bg-blue-500"
+                 : seat1Reservation
+                  ? "bg-orange-500"
+                  : "bg-green-500"
             }`}
           >
             <div className="text-lg font-bold">1</div>
@@ -73,8 +77,11 @@ export default function Home() {
           <div
             onClick={() => setSelectedSeat(2)}
             className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 2 ? "bg-blue-500" : "bg-green-500"
-            }`}
+             selectedSeat === 2
+              ? "bg-blue-500"
+              : seat2Reservation
+                ? "bg-orange-500"
+                : "bg-green-500"            }`}
           >
             <div className="text-lg font-bold">2</div>
 
@@ -94,8 +101,11 @@ export default function Home() {
           <div
             onClick={() => setSelectedSeat(3)}
             className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 3 ? "bg-blue-500" : "bg-green-500"
-            }`}
+             selectedSeat === 3
+              ? "bg-blue-500"
+              : seat3Reservation
+                ? "bg-orange-500"
+                : "bg-green-500"            }`}
           >
             <div className="text-lg font-bold">3</div>
 
@@ -119,7 +129,11 @@ export default function Home() {
           <div
             onClick={() => setSelectedSeat(5)}
             className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 5 ? "bg-blue-500" : "bg-green-500"
+              selectedSeat === 5
+               ? "bg-blue-500"
+               : seat5Reservation
+                ? "bg-orange-500"
+                : "bg-green-500"
             }`}
           >
             <div className="text-lg font-bold">5</div>
@@ -141,7 +155,11 @@ export default function Home() {
           <div
             onClick={() => setSelectedSeat(6)}
             className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 6 ? "bg-blue-500" : "bg-green-500"
+              selectedSeat === 6
+               ? "bg-blue-500"
+               : seat6Reservation
+                ? "bg-orange-500"
+                : "bg-green-500"
             }`}
           >
             <div className="text-lg font-bold">6</div>

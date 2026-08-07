@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DateNavigator from "@/components/DateNavigator";
 import ReservationForm from "@/components/ReservationForm";
+import { supabase } from "@/lib/supabase";
 
 type Reservation = {
   seat: number;
@@ -16,6 +17,23 @@ export default function Home() {
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
+
+  useEffect(() => {
+    const fetchReservations = async () => {
+      const { data, error } = await supabase
+        .from("reservations")
+        .select("*");
+
+      if (error) {
+        console.error("Supabase error:", error.message);
+        return;
+      }
+
+      setReservations(data);
+    };
+
+    fetchReservations();
+  }, []);
 
   const seat1Reservation = reservations.find(
     (reservation) => reservation.seat === 1
@@ -194,10 +212,6 @@ export default function Home() {
         {selectedSeat === null ? "なし" : `${selectedSeat}番席`}
       </p>
 
-      <pre>
-        {JSON.stringify(reservations, null, 2)}
-      </pre>
-
     <button
         onClick={() => setShowForm(true)}
         className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700"
@@ -208,17 +222,33 @@ export default function Home() {
       {showForm && (
         <ReservationForm
           onCancel={() => setShowForm(false)}
-          onSave={(data) => {
+          onSave={async(data) => {
             if (selectedSeat === null) return;
 
-            setReservations((prev) => [
-              ...prev,
-              {
+            const timeValue = data.time || null;
+
+            const { data: reservation, error } = await supabase
+              .from("reservations")
+              .insert({
                 seat: selectedSeat,
                 name: data.name,
                 people: data.people,
-                time: data.time,
-              },
+                time: timeValue,
+              })
+              .select()
+              .single();
+
+            if (error) {
+
+              console.error("Supabase error:", error.message);
+              console.error("Supabase error details:", error.details);
+              console.error("Supabase error hint:", error.hint);
+              return;
+            }
+
+            setReservations((prev) => [
+              ...prev,
+              reservation,
             ]);
 
             setShowForm(false);

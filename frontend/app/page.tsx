@@ -35,21 +35,7 @@ export default function Home() {
     fetchReservations();
   }, []);
 
-  const seat1Reservation = reservations.find(
-    (reservation) => reservation.seat === 1
-  );
-  const seat2Reservation = reservations.find(
-    (reservation) => reservation.seat === 2
-  );
-  const seat3Reservation = reservations.find(
-    (reservation) => reservation.seat === 3
-  );
-  const seat5Reservation = reservations.find(
-    (reservation) => reservation.seat === 5
-  );
-  const seat6Reservation = reservations.find(
-    (reservation) => reservation.seat === 6
-  );
+  const seats = [1, 2, 3, 5, 6];
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
@@ -64,137 +50,79 @@ export default function Home() {
         テーブル席
       </h2>
 
-      <div className="space-y-6">
-        <div className="flex gap-4">
+      <div className="space-y-6"></div>
+      <div className="flex gap-4">
+        {seats.slice(0, 3).map((seat) => {
+          const reservation = reservations.find(
+            (reservation) => reservation.seat === seat
+          );
 
-          <div
-            onClick={() => setSelectedSeat(1)}
-            className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 1
-                 ? "bg-blue-500"
-                 : seat1Reservation
-                  ? "bg-orange-500"
-                  : "bg-green-500"
-            }`}
-          >
-            <div className="text-lg font-bold">1</div>
+          return (
+            <div
+              key={seat}
+              onClick={() => setSelectedSeat(seat)}
+              className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
+                selectedSeat === seat
+                  ? "bg-blue-500"
+                  : reservation
+                    ? "bg-orange-500"
+                    : "bg-green-500"
+              }`}
+            >
+              <div className="text-lg font-bold">{seat}</div>
 
-            {seat1Reservation && (
-              <>
-                <div className="text-xs">
-                  {seat1Reservation.name}
-                </div>
+              {reservation && (
+                <>
+                  <div className="text-xs">
+                    {reservation.name}
+                  </div>
 
-                <div className="text-xs">
-                  {seat1Reservation.time}・{seat1Reservation.people}名
-                </div>
-              </>
-            )}
-          </div>
+                  <div className="text-xs">
+                    {reservation.time}・{reservation.people}名
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-          <div
-            onClick={() => setSelectedSeat(2)}
-            className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-             selectedSeat === 2
-              ? "bg-blue-500"
-              : seat2Reservation
-                ? "bg-orange-500"
-                : "bg-green-500"            }`}
-          >
-            <div className="text-lg font-bold">2</div>
+      <div className="flex gap-4 mt-6">
+        <div className="h-24 w-24"></div>
 
-            {seat2Reservation && (
-              <>
-                <div className="text-xs">
-                  {seat2Reservation.name}
-                </div>
+        {seats.slice(3).map((seat) => {
+          const reservation = reservations.find(
+            (reservation) => reservation.seat === seat
+          );
 
-                <div className="text-xs">
-                  {seat2Reservation.time}・{seat2Reservation.people}名
-                </div>
-              </>
-            )}
-          </div>
+          return (
+            <div
+              key={seat}
+              onClick={() => setSelectedSeat(seat)}
+              className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
+                selectedSeat === seat
+                  ? "bg-blue-500"
+                  : reservation
+                    ? "bg-orange-500"
+                    : "bg-green-500"
+              }`}
+            >
+              <div className="text-lg font-bold">{seat}</div>
 
-          <div
-            onClick={() => setSelectedSeat(3)}
-            className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-             selectedSeat === 3
-              ? "bg-blue-500"
-              : seat3Reservation
-                ? "bg-orange-500"
-                : "bg-green-500"            }`}
-          >
-            <div className="text-lg font-bold">3</div>
+              {reservation && (
+                <>
+                  <div className="text-xs">
+                    {reservation.name}
+                  </div>
 
-            {seat3Reservation && (
-              <>
-                <div className="text-xs">
-                  {seat3Reservation.name}
-                </div>
-
-                <div className="text-xs">
-                  {seat3Reservation.time}・{seat3Reservation.people}名
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="h-24 w-24"></div>
-
-          <div
-            onClick={() => setSelectedSeat(5)}
-            className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 5
-               ? "bg-blue-500"
-               : seat5Reservation
-                ? "bg-orange-500"
-                : "bg-green-500"
-            }`}
-          >
-            <div className="text-lg font-bold">5</div>
-
-            {seat5Reservation && (
-              <>
-                <div className="text-xs">
-                  {seat5Reservation.name}
-                </div>
-
-                <div className="text-xs">
-                  {seat5Reservation.time}・{seat5Reservation.people}名
-                </div>
-              </>
-            )}
-          </div>
-
-
-          <div
-            onClick={() => setSelectedSeat(6)}
-            className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-              selectedSeat === 6
-               ? "bg-blue-500"
-               : seat6Reservation
-                ? "bg-orange-500"
-                : "bg-green-500"
-            }`}
-          >
-            <div className="text-lg font-bold">6</div>
-
-            {seat6Reservation && (
-              <>
-                <div className="text-xs">
-                  {seat6Reservation.name}
-                </div>
-
-                <div className="text-xs">
-                  {seat6Reservation.time}・{seat6Reservation.people}名
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+                  <div className="text-xs">
+                    {reservation.time}・{reservation.people}名
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <h2 className="mt-10 mb-4 text-2xl font-semibold">

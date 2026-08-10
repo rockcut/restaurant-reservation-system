@@ -6,6 +6,7 @@ import ReservationForm from "@/components/ReservationForm";
 import { supabase } from "@/lib/supabase";
 
 type Reservation = {
+  id: number;
   seat: number;
   name: string;
   people: number;
@@ -36,6 +37,42 @@ export default function Home() {
   }, []);
 
   const seats = [1, 2, 3, 5, 6];
+
+  const selectedReservation =
+    selectedSeat === null
+      ? undefined
+      : reservations.find(
+          (reservation) => reservation.seat === selectedSeat
+        );
+
+    const handleDeleteReservation = async () => {
+    if (!selectedReservation) return;
+
+    const confirmed = window.confirm(
+      "この予約を削除しますか？"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("reservations")
+      .delete()
+      .eq("id", selectedReservation.id);
+
+    if (error) {
+      console.error("Supabase error:", error.message);
+      return;
+    }
+
+    setReservations((prev) =>
+      prev.filter(
+        (reservation) => reservation.id !== selectedReservation.id
+      )
+    );
+
+    setSelectedSeat(null);
+    };
+
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
@@ -140,7 +177,16 @@ export default function Home() {
         {selectedSeat === null ? "なし" : `${selectedSeat}番席`}
       </p>
 
-    <button
+      {selectedReservation && (
+        <button
+          onClick={handleDeleteReservation}
+          className="mb-6 rounded-lg bg-red-600 px-6 py-3 text-lg text-white hover:bg-red-700"
+        >
+          予約を削除
+        </button>
+      )}
+
+      <button
         onClick={() => setShowForm(true)}
         className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700"
       >

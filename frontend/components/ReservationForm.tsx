@@ -9,18 +9,24 @@ type ReservationFormProps = {
     people: number;
     time: string;
   }) => void;
+  initialData?: {
+    name: string;
+    people: number;
+    time: string;
+  };
 };
 
 export default function ReservationForm({
   onCancel,
   onSave,
+  initialData,
 }: ReservationFormProps) {
   
     const [plate, setPlate] = useState("");
 
-    const [name, setName] = useState("");
-    const [people, setPeople] = useState(1);
-    const [time, setTime] = useState("");
+const [name, setName] = useState(initialData?.name ?? "");
+const [people, setPeople] = useState(initialData?.people ?? 1);
+const [time, setTime] = useState(initialData?.time ?? "");
 
     return (
     <div className="mt-8 rounded-lg border bg-white p-6 shadow">

@@ -18,6 +18,8 @@ export default function Home() {
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [editingReservation, setEditingReservation] =
+  useState<Reservation | null>(null);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -177,30 +179,93 @@ export default function Home() {
         {selectedSeat === null ? "なし" : `${selectedSeat}番席`}
       </p>
 
-      {selectedReservation && (
-        <button
-          onClick={handleDeleteReservation}
-          className="mb-6 rounded-lg bg-red-600 px-6 py-3 text-lg text-white hover:bg-red-700"
-        >
-          予約を削除
-        </button>
-      )}
+      <div className="mb-6 flex gap-2">
+        {selectedReservation && (
+          <>
+            <button
+              onClick={handleDeleteReservation}
+              className="rounded-lg bg-red-600 px-6 py-3 text-lg text-white hover:bg-red-700"
+            >
+              予約を削除
+            </button>
 
-      <button
-        onClick={() => setShowForm(true)}
-        className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700"
-      >
-        ＋予約を追加
-      </button>
+            <button
+              onClick={() => {
+                setEditingReservation(selectedReservation);
+                setShowForm(true);
+              }}
+              className="rounded-lg bg-yellow-500 px-6 py-3 text-lg text-white hover:bg-yellow-600"
+            >
+              予約を変更
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={() => {
+            setEditingReservation(null);
+            setShowForm(true);
+          }}
+          className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700"
+        >
+          ＋予約を追加
+        </button>
+      </div>
 
       {showForm && (
         <ReservationForm
+          initialData={
+            editingReservation
+              ? {
+                  name: editingReservation.name,
+                  people: editingReservation.people,
+                  time: editingReservation.time,
+                }
+              : undefined
+          }
           onCancel={() => setShowForm(false)}
-          onSave={async(data) => {
+          onSave={async (data) => {
             if (selectedSeat === null) return;
 
             const timeValue = data.time || null;
 
+            // 予約変更の場合
+            if (editingReservation) {
+              const { error } = await supabase
+                .from("reservations")
+                .update({
+                  name: data.name,
+                  people: data.people,
+                  time: timeValue,
+                })
+                .eq("id", editingReservation.id);
+
+              if (error) {
+                console.error("Supabase update error:", error.message);
+                console.error("Supabase update details:", error.details);
+                console.error("Supabase update hint:", error.hint);
+                return;
+              }
+
+            setReservations((prev) =>
+              prev.map((reservation) =>
+                reservation.id === editingReservation.id
+                  ? {
+                      ...reservation,
+                      name: data.name,
+                      people: data.people,
+                      time: timeValue ?? "",
+                    }
+                  : reservation
+              )
+            );
+
+            setEditingReservation(null);
+            setShowForm(false);
+            return;
+          }
+
+            // 新規予約の場合
             const { data: existingReservation, error: checkError } = await supabase
               .from("reservations")
               .select("*")
@@ -217,7 +282,6 @@ export default function Home() {
               return;
             }
 
-
             const { data: reservation, error } = await supabase
               .from("reservations")
               .insert({
@@ -230,7 +294,6 @@ export default function Home() {
               .single();
 
             if (error) {
-
               console.error("Supabase error:", error.message);
               console.error("Supabase error details:", error.details);
               console.error("Supabase error hint:", error.hint);

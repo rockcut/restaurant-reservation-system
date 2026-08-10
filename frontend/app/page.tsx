@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import DateNavigator from "@/components/DateNavigator";
 import ReservationForm from "@/components/ReservationForm";
-import { supabase } from "@/lib/supabase";
+import SeatLayout from "@/components/SeatLayout";
 
 type Reservation = {
   id: number;
@@ -164,15 +165,12 @@ export default function Home() {
         })}
       </div>
 
-      <h2 className="mt-10 mb-4 text-2xl font-semibold">
-        カウンター
-      </h2>
-
-      <div className="mb-10 flex gap-4">
-        <div className="h-16 w-16 rounded-full bg-green-500"></div>
-        <div className="h-16 w-16 rounded-full bg-green-500"></div>
-        <div className="h-16 w-16 rounded-full bg-red-500"></div>
-      </div>
+      <SeatLayout
+        seats={seats}
+        reservations={reservations}
+        selectedSeat={selectedSeat}
+        onSelectSeat={setSelectedSeat}
+      />
 
       <p className="mb-6 text-lg font-medium">
         選択中の席：

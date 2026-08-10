@@ -155,6 +155,23 @@ export default function Home() {
 
             const timeValue = data.time || null;
 
+            const { data: existingReservation, error: checkError } = await supabase
+              .from("reservations")
+              .select("*")
+              .eq("seat", selectedSeat)
+              .maybeSingle();
+
+            if (checkError) {
+              console.error("Supabase error:", checkError.message);
+              return;
+            }
+
+            if (existingReservation) {
+              alert("この席は既に予約されています");
+              return;
+            }
+
+
             const { data: reservation, error } = await supabase
               .from("reservations")
               .insert({

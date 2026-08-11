@@ -25,6 +25,7 @@ export default function Home() {
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [selectedDate, setSelectedDate] = useState("2026-07-18");
   const [editingReservation, setEditingReservation] =
   useState<Reservation | null>(null);
 
@@ -32,7 +33,8 @@ export default function Home() {
     const fetchReservations = async () => {
       const { data, error } = await supabase
         .from("reservations")
-        .select("*");
+        .select("*")
+        .eq("reservation_date", selectedDate);
 
       if (error) {
         console.error("Supabase error:", error.message);
@@ -43,7 +45,7 @@ export default function Home() {
     };
 
     fetchReservations();
-  }, []);
+  }, [selectedDate]);
 
   const seats = [1, 2, 3, 5, 6];
 
@@ -88,9 +90,11 @@ export default function Home() {
       <h1 className="mb-6 text-4xl font-bold">
         飲食店予約管理システム
       </h1>
-      
-      <DateNavigator />
 
+      <DateNavigator
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+      />
       <SeatLayout
         seats={seats}
         reservations={reservations}
@@ -212,6 +216,7 @@ export default function Home() {
               .from("reservations")
               .select("*")
               .eq("seat", selectedSeat)
+              .eq("reservation_date", selectedDate)
               .maybeSingle();
 
             if (checkError) {
@@ -237,6 +242,7 @@ export default function Home() {
                 plate_message: data.plateMessage || null,
                 phone: data.phone || null,
                 note: data.note || null,
+                reservation_date: selectedDate,
               })
               .select()
               .single();

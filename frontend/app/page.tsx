@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import DateNavigator from "@/components/DateNavigator";
 import ReservationForm from "@/components/ReservationForm";
 import SeatLayout from "@/components/SeatLayout";
+import ReservationDetails from "@/components/ReservationDetails";
 
 type Reservation = {
   id: number;
@@ -106,6 +107,10 @@ export default function Home() {
         選択中の席：
         {selectedSeat === null ? "なし" : `${selectedSeat}番席`}
       </p>
+
+      {selectedReservation && (
+        <ReservationDetails reservation={selectedReservation} />
+      )}
 
       <div className="mb-6 flex gap-2">
         {selectedReservation && (

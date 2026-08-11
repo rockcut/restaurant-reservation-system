@@ -12,6 +12,12 @@ type Reservation = {
   name: string;
   people: number;
   time: string;
+  course: string | null;
+  allergy: string | null;
+  plate: string | null;
+  plate_message: string | null;
+  phone: string | null;
+  note: string | null;
 };
 
 export default function Home() {
@@ -85,86 +91,6 @@ export default function Home() {
       
       <DateNavigator />
 
-
-      <h2 className="mb-4 text-2xl font-semibold">
-        テーブル席
-      </h2>
-
-      <div className="space-y-6"></div>
-      <div className="flex gap-4">
-        {seats.slice(0, 3).map((seat) => {
-          const reservation = reservations.find(
-            (reservation) => reservation.seat === seat
-          );
-
-          return (
-            <div
-              key={seat}
-              onClick={() => setSelectedSeat(seat)}
-              className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-                selectedSeat === seat
-                  ? "bg-blue-500"
-                  : reservation
-                    ? "bg-orange-500"
-                    : "bg-green-500"
-              }`}
-            >
-              <div className="text-lg font-bold">{seat}</div>
-
-              {reservation && (
-                <>
-                  <div className="text-xs">
-                    {reservation.name}
-                  </div>
-
-                  <div className="text-xs">
-                    {reservation.time}・{reservation.people}名
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex gap-4 mt-6">
-        <div className="h-24 w-24"></div>
-
-        {seats.slice(3).map((seat) => {
-          const reservation = reservations.find(
-            (reservation) => reservation.seat === seat
-          );
-
-          return (
-            <div
-              key={seat}
-              onClick={() => setSelectedSeat(seat)}
-              className={`flex h-24 w-24 flex-col items-center justify-center rounded-lg text-white cursor-pointer ${
-                selectedSeat === seat
-                  ? "bg-blue-500"
-                  : reservation
-                    ? "bg-orange-500"
-                    : "bg-green-500"
-              }`}
-            >
-              <div className="text-lg font-bold">{seat}</div>
-
-              {reservation && (
-                <>
-                  <div className="text-xs">
-                    {reservation.name}
-                  </div>
-
-                  <div className="text-xs">
-                    {reservation.time}・{reservation.people}名
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
       <SeatLayout
         seats={seats}
         reservations={reservations}
@@ -218,6 +144,12 @@ export default function Home() {
                   name: editingReservation.name,
                   people: editingReservation.people,
                   time: editingReservation.time,
+                  course: editingReservation.course ?? "",
+                  allergy: editingReservation.allergy ?? "",
+                  plate: editingReservation.plate ?? "",
+                  plateMessage: editingReservation.plate_message ?? "",
+                  phone: editingReservation.phone ?? "",
+                  note: editingReservation.note ?? "",
                 }
               : undefined
           }
@@ -235,6 +167,12 @@ export default function Home() {
                   name: data.name,
                   people: data.people,
                   time: timeValue,
+                  course: data.course || null,
+                  allergy: data.allergy || null,
+                  plate: data.plate || null,
+                  plate_message: data.plateMessage || null,
+                  phone: data.phone || null,
+                  note: data.note || null,
                 })
                 .eq("id", editingReservation.id);
 
@@ -249,10 +187,16 @@ export default function Home() {
               prev.map((reservation) =>
                 reservation.id === editingReservation.id
                   ? {
-                      ...reservation,
-                      name: data.name,
-                      people: data.people,
-                      time: timeValue ?? "",
+                    ...reservation,
+                    name: data.name,
+                    people: data.people,
+                    time: timeValue ?? "",
+                    course: data.course || null,
+                    allergy: data.allergy || null,
+                    plate: data.plate || null,
+                    plate_message: data.plateMessage || null,
+                    phone: data.phone || null,
+                    note: data.note || null,
                     }
                   : reservation
               )
@@ -287,6 +231,12 @@ export default function Home() {
                 name: data.name,
                 people: data.people,
                 time: timeValue,
+                course: data.course || null,
+                allergy: data.allergy || null,
+                plate: data.plate || null,
+                plate_message: data.plateMessage || null,
+                phone: data.phone || null,
+                note: data.note || null,
               })
               .select()
               .single();

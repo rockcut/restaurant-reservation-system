@@ -8,11 +8,24 @@ type ReservationFormProps = {
     name: string;
     people: number;
     time: string;
+    course: string;
+    allergy: string;
+    plate: string;
+    plateMessage: string;
+    phone: string;
+    note: string;
   }) => void;
+
   initialData?: {
     name: string;
     people: number;
     time: string;
+    course?: string;
+    allergy?: string;
+    plate?: string;
+    plateMessage?: string;
+    phone?: string;
+    note?: string;
   };
 };
 
@@ -22,11 +35,19 @@ export default function ReservationForm({
   initialData,
 }: ReservationFormProps) {
   
-    const [plate, setPlate] = useState("");
+const [plate, setPlate] = useState(initialData?.plate ?? "");
 
 const [name, setName] = useState(initialData?.name ?? "");
 const [people, setPeople] = useState(initialData?.people ?? 1);
 const [time, setTime] = useState(initialData?.time ?? "");
+
+const [course, setCourse] = useState(initialData?.course ?? "");
+const [allergy, setAllergy] = useState(initialData?.allergy ?? "");
+const [plateMessage, setPlateMessage] = useState(
+  initialData?.plateMessage ?? ""
+);
+const [phone, setPhone] = useState(initialData?.phone ?? "");
+const [note, setNote] = useState(initialData?.note ?? "");
 
     return (
     <div className="mt-8 rounded-lg border bg-white p-6 shadow">
@@ -79,31 +100,55 @@ const [time, setTime] = useState(initialData?.time ?? "");
         className="mb-4 w-full rounded-lg border px-4 py-2"
       />
 
-        <label className="mb-2 block font-semibold">
-          コース
+      <label className="mb-2 block font-semibold">
+        コース
+      </label>
+
+      <div className="mb-4 space-y-2">
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="course"
+            value="5000円コース"
+            checked={course === "5000円コース"}
+            onChange={(e) => setCourse(e.target.value)}
+          />
+          5,000円コース
         </label>
 
-        <div className="mb-4 space-y-2">
-          <label className="flex items-center gap-2">
-          <input type="radio" name="course" value="5000円コース" />
-          5,000円コース
-          </label>
-
-          <label className="flex items-center gap-2">
-          <input type="radio" name="course" value="6000円コース" />
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="course"
+            value="6000円コース"
+            checked={course === "6000円コース"}
+            onChange={(e) => setCourse(e.target.value)}
+          />
           6,000円コース
-          </label>
+        </label>
 
-          <label className="flex items-center gap-2">
-          <input type="radio" name="course" value="アラカルト" />
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="course"
+            value="アラカルト"
+            checked={course === "アラカルト"}
+            onChange={(e) => setCourse(e.target.value)}
+          />
           アラカルト
-          </label>
+        </label>
 
-          <label className="flex items-center gap-2">
-          <input type="radio" name="course" value="アラカルト" />
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="course"
+            value="検討中"
+            checked={course === "検討中"}
+            onChange={(e) => setCourse(e.target.value)}
+          />
           検討中
-          </label>
-        </div>
+        </label>
+      </div>
 
         <label className="mb-2 block font-semibold">
           苦手なもの・アレルギー
@@ -111,6 +156,8 @@ const [time, setTime] = useState(initialData?.time ?? "");
 
         <textarea
           rows={3}
+          value={allergy}
+          onChange={(e) => setAllergy(e.target.value)}
           placeholder="例：甲殻類アレルギー、パクチーNG"
           className="mb-4 w-full rounded-lg border px-4 py-2"
         />
@@ -149,6 +196,8 @@ const [time, setTime] = useState(initialData?.time ?? "");
 
             <textarea
               rows={2}
+              value={plateMessage}
+              onChange={(e) => setPlateMessage(e.target.value)}
               placeholder="例：Happy Birthday ○○"
               className="mb-4 w-full rounded-lg border px-4 py-2"
             />
@@ -161,6 +210,8 @@ const [time, setTime] = useState(initialData?.time ?? "");
 
       <input
         type="tel"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
         className="mb-4 w-full rounded-lg border px-4 py-2"
       />
 
@@ -170,6 +221,8 @@ const [time, setTime] = useState(initialData?.time ?? "");
 
         <textarea
           rows={4}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
           placeholder="その他、お客様からのご要望など"
           className="mb-4 w-full rounded-lg border px-4 py-2"
         />
@@ -190,6 +243,12 @@ const [time, setTime] = useState(initialData?.time ?? "");
                 name,
                 people,
                 time,
+                course,
+                allergy,
+                plate,
+                plateMessage,
+                phone,
+                note,
               })
             }
             className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"

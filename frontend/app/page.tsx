@@ -85,6 +85,15 @@ export default function Home() {
     setSelectedSeat(null);
     };
 
+    const getSeatLabel = (seat: number | null) => {
+      if (seat === null) return "なし";
+
+      if (seat >= 101 && seat <= 103) {
+        return `カウンター${seat - 100}`;
+      }
+
+      return `${seat}番席`;
+    };
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
@@ -104,8 +113,7 @@ export default function Home() {
       />
 
       <p className="mb-6 text-lg font-medium">
-        選択中の席：
-        {selectedSeat === null ? "なし" : `${selectedSeat}番席`}
+        選択中の席：{getSeatLabel(selectedSeat)}
       </p>
 
       {selectedReservation && (

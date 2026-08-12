@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import DateNavigator from "@/components/DateNavigator";
@@ -29,6 +29,7 @@ export default function Home() {
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const formRef = useRef<HTMLDivElement>(null);
   const [selectedDate, setSelectedDate] = useState("2026-07-18");
   const router = useRouter();
   const [isAuthChecked, setIsAuthChecked] = useState(false);
@@ -53,6 +54,16 @@ export default function Home() {
     checkUser();
   }, [router]);
 
+  useEffect(() => {
+    if (!showForm) return;
+
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, [showForm]);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -300,33 +311,97 @@ export default function Home() {
       </div>
 
       {showForm && (
-        <ReservationForm
-          initialData={
-            editingReservation
-              ? {
-                  name: editingReservation.name,
-                  people: editingReservation.people,
-                  time: editingReservation.time,
-                  course: editingReservation.course ?? "",
-                  allergy: editingReservation.allergy ?? "",
-                  plate: editingReservation.plate ?? "",
-                  plateMessage: editingReservation.plate_message ?? "",
-                  phone: editingReservation.phone ?? "",
-                  note: editingReservation.note ?? "",
+        <div ref={formRef}>
+          <ReservationForm
+            initialData={
+              editingReservation
+                ? {
+                    name: editingReservation.name,
+                    people: editingReservation.people,
+                    time: editingReservation.time,
+                    course: editingReservation.course ?? "",
+                    allergy: editingReservation.allergy ?? "",
+                    plate: editingReservation.plate ?? "",
+                    plateMessage: editingReservation.plate_message ?? "",
+                    phone: editingReservation.phone ?? "",
+                    note: editingReservation.note ?? "",
+                  }
+                : undefined
+            }
+            onCancel={() => setShowForm(false)}
+            onSave={async (data) => {
+              if (selectedSeat === null) return;
+
+              const timeValue = data.time || null;
+
+              // 予約変更の場合
+              if (editingReservation) {
+                const { error } = await supabase
+                  .from("reservations")
+                  .update({
+                    name: data.name,
+                    people: data.people,
+                    time: timeValue,
+                    course: data.course || null,
+                    allergy: data.allergy || null,
+                    plate: data.plate || null,
+                    plate_message: data.plateMessage || null,
+                    phone: data.phone || null,
+                    note: data.note || null,
+                  })
+                  .eq("id", editingReservation.id);
+
+                if (error) {
+                  console.error("Supabase update error:", error.message);
+                  console.error("Supabase update details:", error.details);
+                  console.error("Supabase update hint:", error.hint);
+                  return;
                 }
-              : undefined
-          }
-          onCancel={() => setShowForm(false)}
-          onSave={async (data) => {
-            if (selectedSeat === null) return;
 
-            const timeValue = data.time || null;
+              setReservations((prev) =>
+                prev.map((reservation) =>
+                  reservation.id === editingReservation.id
+                    ? {
+                      ...reservation,
+                      name: data.name,
+                      people: data.people,
+                      time: timeValue ?? "",
+                      course: data.course || null,
+                      allergy: data.allergy || null,
+                      plate: data.plate || null,
+                      plate_message: data.plateMessage || null,
+                      phone: data.phone || null,
+                      note: data.note || null,
+                      }
+                    : reservation
+                )
+              );
 
-            // 予約変更の場合
-            if (editingReservation) {
-              const { error } = await supabase
+              setEditingReservation(null);
+              setShowForm(false);
+              return;
+            }
+
+              const conflictingReservation = reservations.find((reservation) => {
+                const reservedSeats =
+                  reservation.seats && reservation.seats.length > 0
+                    ? reservation.seats
+                    : [reservation.seat];
+
+                return selectedSeats.some((seat) =>
+                  reservedSeats.includes(seat)
+                );
+              });
+
+              if (conflictingReservation) {
+                alert("選択した席の中に既に予約されている席があります");
+                return;
+              }
+
+              const { data: reservation, error } = await supabase
                 .from("reservations")
-                .update({
+                .insert({
+                  seat: selectedSeat,
                   name: data.name,
                   people: data.people,
                   time: timeValue,
@@ -336,108 +411,46 @@ export default function Home() {
                   plate_message: data.plateMessage || null,
                   phone: data.phone || null,
                   note: data.note || null,
+                  reservation_date: selectedDate,
                 })
-                .eq("id", editingReservation.id);
+                .select()
+                .single();
 
               if (error) {
-                console.error("Supabase update error:", error.message);
-                console.error("Supabase update details:", error.details);
-                console.error("Supabase update hint:", error.hint);
+                console.error("Supabase error:", error.message);
+                console.error("Supabase error details:", error.details);
+                console.error("Supabase error hint:", error.hint);
                 return;
               }
 
-            setReservations((prev) =>
-              prev.map((reservation) =>
-                reservation.id === editingReservation.id
-                  ? {
-                    ...reservation,
-                    name: data.name,
-                    people: data.people,
-                    time: timeValue ?? "",
-                    course: data.course || null,
-                    allergy: data.allergy || null,
-                    plate: data.plate || null,
-                    plate_message: data.plateMessage || null,
-                    phone: data.phone || null,
-                    note: data.note || null,
-                    }
-                  : reservation
-              )
-            );
+              const seatRows = selectedSeats.map((seat) => ({
+                reservation_id: reservation.id,
+                seat,
+              }));
 
-            setEditingReservation(null);
-            setShowForm(false);
-            return;
-          }
+              const { error: seatError } = await supabase
+                .from("reservation_seats")
+                .insert(seatRows);
 
-            const conflictingReservation = reservations.find((reservation) => {
-              const reservedSeats =
-                reservation.seats && reservation.seats.length > 0
-                  ? reservation.seats
-                  : [reservation.seat];
+              if (seatError) {
+                console.error("Supabase seat error:", seatError.message);
+                return;
+              }
 
-              return selectedSeats.some((seat) =>
-                reservedSeats.includes(seat)
-              );
-            });
+              setReservations((prev) => [
+                ...prev,
+                {
+                  ...reservation,
+                  seats: selectedSeats,
+                },
+              ]);
 
-            if (conflictingReservation) {
-              alert("選択した席の中に既に予約されている席があります");
-              return;
-            }
-
-            const { data: reservation, error } = await supabase
-              .from("reservations")
-              .insert({
-                seat: selectedSeat,
-                name: data.name,
-                people: data.people,
-                time: timeValue,
-                course: data.course || null,
-                allergy: data.allergy || null,
-                plate: data.plate || null,
-                plate_message: data.plateMessage || null,
-                phone: data.phone || null,
-                note: data.note || null,
-                reservation_date: selectedDate,
-              })
-              .select()
-              .single();
-
-            if (error) {
-              console.error("Supabase error:", error.message);
-              console.error("Supabase error details:", error.details);
-              console.error("Supabase error hint:", error.hint);
-              return;
-            }
-
-            const seatRows = selectedSeats.map((seat) => ({
-              reservation_id: reservation.id,
-              seat,
-            }));
-
-            const { error: seatError } = await supabase
-              .from("reservation_seats")
-              .insert(seatRows);
-
-            if (seatError) {
-              console.error("Supabase seat error:", seatError.message);
-              return;
-            }
-
-            setReservations((prev) => [
-              ...prev,
-              {
-                ...reservation,
-                seats: selectedSeats,
-              },
-            ]);
-
-            setShowForm(false);
-            setSelectedSeats([]);
-            setSelectedSeat(null);
-          }}
-        />
+              setShowForm(false);
+              setSelectedSeats([]);
+              setSelectedSeat(null);
+            }}
+          />
+          </div>
       )}
     </main>
   );

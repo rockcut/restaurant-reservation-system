@@ -53,6 +53,7 @@ export default function Home() {
     checkUser();
   }, [router]);
 
+
   useEffect(() => {
     const fetchReservations = async () => {
       const { data, error } = await supabase
@@ -201,6 +202,12 @@ export default function Home() {
       return `${seat}番席`;
     };
 
+    const handleDateChange = (date: string) => {
+      setSelectedSeat(null);
+      setSelectedSeats([]);
+      setSelectedDate(date);
+    };
+
   if (!isAuthChecked) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -238,7 +245,7 @@ export default function Home() {
 
       <DateNavigator
         selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
+        onDateChange={handleDateChange}
       />
       <SeatLayout
         seats={seats}

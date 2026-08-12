@@ -141,8 +141,11 @@ export default function Home() {
         if (selectedSeats.includes(seat)) {
           setSelectedSeat(null);
           setSelectedSeats([]);
+          setShowForm(false);
+          setEditingReservation(null);
           return;
         }
+
 
         // カウンター席は常に単独選択
         setSelectedSeat(seat);
@@ -166,6 +169,11 @@ export default function Home() {
               ? null
               : nextSeats[nextSeats.length - 1]
           );
+
+          if (nextSeats.length === 0) {
+              setShowForm(false);
+              setEditingReservation(null);
+            }
 
           return nextSeats;
         }

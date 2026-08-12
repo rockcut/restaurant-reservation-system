@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import DateNavigator from "@/components/DateNavigator";
 import ReservationForm from "@/components/ReservationForm";
 import SeatLayout from "@/components/SeatLayout";
@@ -29,8 +30,28 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedDate, setSelectedDate] = useState("2026-07-18");
+  const router = useRouter();
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [editingReservation, setEditingReservation] =
   useState<Reservation | null>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        router.push("/login");
+        return;
+      }
+
+      setIsAuthChecked(true);
+    };
+
+    checkUser();
+  }, [router]);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -166,11 +187,40 @@ export default function Home() {
       return `${seat}番席`;
     };
 
+  if (!isAuthChecked) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p>ログイン状態を確認中...</p>
+      </main>
+    );
+  }
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Logout error:", error.message);
+      return;
+    }
+
+    router.push("/login");
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-8">
-      <h1 className="mb-6 text-4xl font-bold">
-        飲食店予約管理システム
-      </h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-4xl font-bold">
+          飲食店予約管理システム
+        </h1>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+        >
+          ログアウト
+        </button>
+      </div>
 
       <DateNavigator
         selectedDate={selectedDate}

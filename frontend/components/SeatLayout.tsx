@@ -3,6 +3,7 @@
 type Reservation = {
   id: number;
   seat: number;
+  seats?: number[]
   name: string;
   people: number;
   time: string;
@@ -12,6 +13,7 @@ type SeatLayoutProps = {
   seats: number[];
   reservations: Reservation[];
   selectedSeat: number | null;
+  selectedSeats: number[];
   onSelectSeat: (seat: number) => void;
 };
 
@@ -19,6 +21,7 @@ export default function SeatLayout({
   seats,
   reservations,
   selectedSeat,
+  selectedSeats,
   onSelectSeat,
 }: SeatLayoutProps) {
 
@@ -34,16 +37,18 @@ export default function SeatLayout({
 
       <div className="flex gap-4">
         {seats.slice(0, 3).map((seat) => {
-          const reservation = reservations.find(
-            (reservation) => reservation.seat === seat
-          );
+            const reservation = reservations.find(
+            (reservation) =>
+                reservation.seats?.includes(seat) ||
+                reservation.seat === seat
+            );
 
           return (
             <div
               key={seat}
               onClick={() => onSelectSeat(seat)}
               className={`flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg text-white ${
-                selectedSeat === seat
+                selectedSeats.includes(seat)     
                   ? "bg-blue-500"
                   : reservation
                     ? "bg-orange-500"
@@ -83,7 +88,7 @@ export default function SeatLayout({
               key={seat}
               onClick={() => onSelectSeat(seat)}
               className={`flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg text-white ${
-                selectedSeat === seat
+                selectedSeats.includes(seat)  
                   ? "bg-blue-500"
                   : reservation
                     ? "bg-orange-500"

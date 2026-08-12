@@ -10,6 +10,7 @@ import ReservationDetails from "@/components/ReservationDetails";
 type Reservation = {
   id: number;
   seat: number;
+  seats?: number[];
   name: string;
   people: number;
   time: string;
@@ -24,6 +25,7 @@ type Reservation = {
 export default function Home() {
 
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
+  const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedDate, setSelectedDate] = useState("2026-07-18");
@@ -34,7 +36,12 @@ export default function Home() {
     const fetchReservations = async () => {
       const { data, error } = await supabase
         .from("reservations")
-        .select("*")
+        .select(`
+          *,
+          reservation_seats (
+            seat
+          )
+        `)
         .eq("reservation_date", selectedDate);
 
       if (error) {
@@ -42,7 +49,14 @@ export default function Home() {
         return;
       }
 
-      setReservations(data);
+      const formattedReservations = data.map((reservation) => ({
+        ...reservation,
+        seats: reservation.reservation_seats.map(
+          (item: { seat: number }) => item.seat
+        ),
+      }));
+
+      setReservations(formattedReservations);
     };
 
     fetchReservations();
@@ -54,7 +68,9 @@ export default function Home() {
     selectedSeat === null
       ? undefined
       : reservations.find(
-          (reservation) => reservation.seat === selectedSeat
+          (reservation) =>
+            reservation.seats?.includes(selectedSeat) ||
+            reservation.seat === selectedSeat
         );
 
     const handleDeleteReservation = async () => {
@@ -81,8 +97,63 @@ export default function Home() {
         (reservation) => reservation.id !== selectedReservation.id
       )
     );
-
+    setSelectedSeats([]);
     setSelectedSeat(null);
+    };
+
+    const handleSelectSeat = (seat: number) => {
+      // カウンターは単独選択のみ
+      if (seat >= 101) {
+        setSelectedSeat(seat);
+        setSelectedSeats([seat]);
+        return;
+      }
+
+      setSelectedSeats((prev) => {
+        // すでに選択中なら解除
+        if (prev.includes(seat)) {
+          const nextSeats = prev.filter((s) => s !== seat);
+
+          setSelectedSeat(
+            nextSeats.length === 0
+              ? null
+              : nextSeats[nextSeats.length - 1]
+          );
+
+          return nextSeats;
+        }
+
+        const nextSeats = [...prev, seat].sort((a, b) => a - b);
+
+        const allowedCombinations = [
+          [1],
+          [2],
+          [3],
+          [5],
+          [6],
+          [1, 2],
+          [2, 3],
+          [1, 2, 3],
+          [5, 6],
+        ];
+
+        const isAllowed = allowedCombinations.some(
+          (combination) =>
+            combination.length === nextSeats.length &&
+            combination.every(
+              (value, index) => value === nextSeats[index]
+            )
+        );
+
+        if (!isAllowed) {
+          alert("この席の組み合わせでは予約できません");
+          return prev;
+        }
+
+        setSelectedSeat(seat);
+
+        return nextSeats;
+      });
     };
 
     const getSeatLabel = (seat: number | null) => {
@@ -109,11 +180,15 @@ export default function Home() {
         seats={seats}
         reservations={reservations}
         selectedSeat={selectedSeat}
-        onSelectSeat={setSelectedSeat}
+        selectedSeats={selectedSeats}
+        onSelectSeat={handleSelectSeat}
       />
 
       <p className="mb-6 text-lg font-medium">
-        選択中の席：{getSeatLabel(selectedSeat)}
+        選択中の席：
+        {selectedSeats.length === 0
+          ? "なし"
+          : selectedSeats.map((seat) => getSeatLabel(seat)).join("・")}
       </p>
 
       {selectedReservation && (
@@ -224,21 +299,19 @@ export default function Home() {
             return;
           }
 
-            // 新規予約の場合
-            const { data: existingReservation, error: checkError } = await supabase
-              .from("reservations")
-              .select("*")
-              .eq("seat", selectedSeat)
-              .eq("reservation_date", selectedDate)
-              .maybeSingle();
+            const conflictingReservation = reservations.find((reservation) => {
+              const reservedSeats =
+                reservation.seats && reservation.seats.length > 0
+                  ? reservation.seats
+                  : [reservation.seat];
 
-            if (checkError) {
-              console.error("Supabase error:", checkError.message);
-              return;
-            }
+              return selectedSeats.some((seat) =>
+                reservedSeats.includes(seat)
+              );
+            });
 
-            if (existingReservation) {
-              alert("この席は既に予約されています");
+            if (conflictingReservation) {
+              alert("選択した席の中に既に予約されている席があります");
               return;
             }
 
@@ -267,12 +340,31 @@ export default function Home() {
               return;
             }
 
+            const seatRows = selectedSeats.map((seat) => ({
+              reservation_id: reservation.id,
+              seat,
+            }));
+
+            const { error: seatError } = await supabase
+              .from("reservation_seats")
+              .insert(seatRows);
+
+            if (seatError) {
+              console.error("Supabase seat error:", seatError.message);
+              return;
+            }
+
             setReservations((prev) => [
               ...prev,
-              reservation,
+              {
+                ...reservation,
+                seats: selectedSeats,
+              },
             ]);
 
             setShowForm(false);
+            setSelectedSeats([]);
+            setSelectedSeat(null);
           }}
         />
       )}

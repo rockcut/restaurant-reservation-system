@@ -123,15 +123,29 @@ export default function Home() {
     };
 
     const handleSelectSeat = (seat: number) => {
-      // カウンターは単独選択のみ
+      // カウンター席
       if (seat >= 101) {
+        // 同じカウンター席をもう一度押したら解除
+        if (selectedSeats.includes(seat)) {
+          setSelectedSeat(null);
+          setSelectedSeats([]);
+          return;
+        }
+
+        // カウンター席は常に単独選択
         setSelectedSeat(seat);
         setSelectedSeats([seat]);
         return;
       }
 
       setSelectedSeats((prev) => {
-        // すでに選択中なら解除
+        // カウンター席が選択中なら、テーブル席へ切り替える
+        if (prev.some((selectedSeat) => selectedSeat >= 101)) {
+          setSelectedSeat(seat);
+          return [seat];
+        }
+
+        // 同じテーブル席をもう一度押したら解除
         if (prev.includes(seat)) {
           const nextSeats = prev.filter((s) => s !== seat);
 

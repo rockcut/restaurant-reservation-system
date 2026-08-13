@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 type Reservation = {
   id: number;
@@ -24,6 +25,7 @@ export default function SearchPage() {
   const [results, setResults] = useState<Reservation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const router = useRouter();
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
 
@@ -96,6 +98,15 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
+
+      <button
+        type="button"
+        onClick={() => router.push("/")}
+        className="mb-4 rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+        >
+        ← 予約管理に戻る
+        </button>
+
       <h1 className="mb-6 text-3xl font-bold">
         予約検索
       </h1>

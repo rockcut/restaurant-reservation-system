@@ -23,6 +23,16 @@ type Reservation = {
   note: string | null;
 };
 
+  const getTodayString = () => {
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
 export default function Home() {
 
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
@@ -30,7 +40,7 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
-  const [selectedDate, setSelectedDate] = useState("2026-07-18");
+  const [selectedDate, setSelectedDate] = useState(getTodayString());
   const router = useRouter();
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [editingReservation, setEditingReservation] =
@@ -253,13 +263,23 @@ export default function Home() {
           飲食店予約管理システム
         </h1>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
-        >
-          ログアウト
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => router.push("/search")}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            予約検索
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+          >
+            ログアウト
+          </button>
+        </div>
       </div>
 
       <DateNavigator

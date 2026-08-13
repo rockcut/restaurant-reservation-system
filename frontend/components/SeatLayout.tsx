@@ -3,7 +3,7 @@
 type Reservation = {
   id: number;
   seat: number;
-  seats?: number[]
+  seats?: number[];
   name: string;
   people: number;
   time: string;
@@ -15,8 +15,12 @@ type SeatLayoutProps = {
   selectedSeat: number | null;
   selectedSeats: number[];
   onSelectSeat: (seat: number) => void;
-};
 
+  // 席交換モード用
+  isSwapMode: boolean;
+  swapSeatA: number | null;
+  swapSeatB: number | null;
+};
 
 export default function SeatLayout({
   seats,
@@ -24,6 +28,9 @@ export default function SeatLayout({
   selectedSeat,
   selectedSeats,
   onSelectSeat,
+  isSwapMode,
+  swapSeatA,
+  swapSeatB,
 }: SeatLayoutProps) {
   const counterSeats = [101, 102, 103];
 
@@ -43,96 +50,170 @@ export default function SeatLayout({
   const hasSameSeats = (
     reservation: Reservation,
     targetSeats: number[]
-    ) => {
+  ) => {
     if (!reservation.seats) return false;
 
-    const reservationSeats = [...reservation.seats].sort((a, b) => a - b);
-    const sortedTargetSeats = [...targetSeats].sort((a, b) => a - b);
+    const reservationSeats = [...reservation.seats].sort(
+      (a, b) => a - b
+    );
+
+    const sortedTargetSeats = [...targetSeats].sort(
+      (a, b) => a - b
+    );
 
     return (
-        reservationSeats.length === sortedTargetSeats.length &&
-        reservationSeats.every(
-        (seat, index) => seat === sortedTargetSeats[index]
-        )
+      reservationSeats.length === sortedTargetSeats.length &&
+      reservationSeats.every(
+        (seat, index) =>
+          seat === sortedTargetSeats[index]
+      )
     );
-    };
+  };
 
-    const findReservationForSeat = (seat: number) => {
-    return reservations.find(
-        (reservation) =>
-        reservation.seats?.includes(seat) ||
-        reservation.seat === seat
-    );
-    };
+  const findReservationForSeat = (seat: number) => {
+    return reservations.find((reservation) => {
+        if (
+        reservation.seats &&
+        reservation.seats.length > 0
+        ) {
+        return reservation.seats.includes(seat);
+        }
 
-    const renderSingleSeat = (seat: number) => {
+        return reservation.seat === seat;
+    });
+  };
+
+  const isSwapSelected = (seat: number) => {
+    return seat === swapSeatA || seat === swapSeatB;
+  };
+
+  const renderSingleSeat = (seat: number) => {
     const reservation = findReservationForSeat(seat);
 
+    const isSelected = isSwapMode
+      ? isSwapSelected(seat)
+      : selectedSeats.includes(seat);
+
     return (
-        <div
+      <div
         key={seat}
         onClick={() => onSelectSeat(seat)}
         className={`flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-lg text-white ${
-            selectedSeats.includes(seat)
+          isSelected
             ? "bg-blue-500"
             : reservation
-                ? "bg-orange-500"
-                : "bg-green-500"
+              ? "bg-orange-500"
+              : "bg-green-500"
         }`}
-        >
-        <div className="text-lg font-bold">{seat}</div>
+      >
+        <div className="text-lg font-bold">
+          {seat}
+        </div>
 
         {reservation && (
-            <>
+          <>
             <div className="text-xs">
-                {reservation.name}
+              {reservation.name}
             </div>
 
             <div className="text-xs">
-                {reservation.time}・{reservation.people}名
+              {reservation.time}・
+              {reservation.people}名
             </div>
-            </>
+          </>
         )}
-        </div>
+      </div>
     );
-    };
+  };
 
-    const renderCombinedReservation = (
+  const renderCombinedReservation = (
     reservation: Reservation,
     widthClass: string
-    ) => {
-    const combinedSeats = reservation.seats ?? [];
+  ) => {
+    const combinedSeats = (
+      reservation.seats ?? []
+    )
+      .slice()
+      .sort((a, b) => a - b);
+
+    // ==========================
+    // 席交換モード
+    // ==========================
+    if (isSwapMode) {
+      return (
+        <div
+          key={reservation.id}
+          className={`flex h-24 ${widthClass} overflow-hidden rounded-lg`}
+        >
+          {combinedSeats.map((seat, index) => {
+            const selected = isSwapSelected(seat);
+
+            return (
+              <div
+                key={seat}
+                onClick={() => onSelectSeat(seat)}
+                className={`flex flex-1 cursor-pointer flex-col items-center justify-center text-white ${
+                  selected
+                    ? "bg-blue-500"
+                    : "bg-orange-500"
+                } ${
+                  index !==
+                  combinedSeats.length - 1
+                    ? "border-r border-orange-300"
+                    : ""
+                }`}
+              >
+                <div className="text-lg font-bold">
+                  {seat}
+                </div>
+
+                <div className="text-xs">
+                  {reservation.name}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // ==========================
+    // 通常モード
+    // ==========================
 
     const isSelected =
-        selectedSeat !== null &&
-        combinedSeats.includes(selectedSeat);
+      selectedSeat !== null &&
+      combinedSeats.includes(selectedSeat);
 
     return (
-        <div
+      <div
         key={reservation.id}
         onClick={() => {
-            if (combinedSeats.length > 0) {
+          if (combinedSeats.length > 0) {
             onSelectSeat(combinedSeats[0]);
-            }
+          }
         }}
         className={`flex h-24 ${widthClass} cursor-pointer flex-col items-center justify-center rounded-lg text-white ${
-            isSelected ? "bg-blue-500" : "bg-orange-500"
+          isSelected
+            ? "bg-blue-500"
+            : "bg-orange-500"
         }`}
-        >
+      >
         <div className="text-lg font-bold">
-            {getCombinedSeatLabel(reservation)}
+          {getCombinedSeatLabel(reservation)}
         </div>
 
         <div className="text-sm font-semibold">
-            {reservation.name}
+          {reservation.name}
         </div>
 
         <div className="text-xs">
-            {reservation.time}・{reservation.people}名
+          {reservation.time}・
+          {reservation.people}名
         </div>
-        </div>
+      </div>
     );
-    };
+  };
 
   return (
     <>
@@ -144,56 +225,82 @@ export default function SeatLayout({
 
       <div className="flex gap-4">
         {(() => {
-            const combined123 = reservations.find(
-            (reservation) =>
-                isCombinedReservation(reservation) &&
-                hasSameSeats(reservation, [1, 2, 3])
+          const combined123 =
+            reservations.find(
+              (reservation) =>
+                isCombinedReservation(
+                  reservation
+                ) &&
+                hasSameSeats(
+                  reservation,
+                  [1, 2, 3]
+                )
             );
 
-            const combined12 = reservations.find(
-            (reservation) =>
-                isCombinedReservation(reservation) &&
-                hasSameSeats(reservation, [1, 2])
+          const combined12 =
+            reservations.find(
+              (reservation) =>
+                isCombinedReservation(
+                  reservation
+                ) &&
+                hasSameSeats(
+                  reservation,
+                  [1, 2]
+                )
             );
 
-            const combined23 = reservations.find(
-            (reservation) =>
-                isCombinedReservation(reservation) &&
-                hasSameSeats(reservation, [2, 3])
+          const combined23 =
+            reservations.find(
+              (reservation) =>
+                isCombinedReservation(
+                  reservation
+                ) &&
+                hasSameSeats(
+                  reservation,
+                  [2, 3]
+                )
             );
 
-            if (combined123) {
+          if (combined123) {
             return renderCombinedReservation(
-                combined123,
-                "w-80"
+              combined123,
+              "w-80"
             );
-            }
+          }
 
-            if (combined12) {
+          if (combined12) {
             return (
-                <>
-                {renderCombinedReservation(combined12, "w-52")}
+              <>
+                {renderCombinedReservation(
+                  combined12,
+                  "w-52"
+                )}
+
                 {renderSingleSeat(3)}
-                </>
+              </>
             );
-            }
+          }
 
-            if (combined23) {
+          if (combined23) {
             return (
-                <>
+              <>
                 {renderSingleSeat(1)}
-                {renderCombinedReservation(combined23, "w-52")}
-                </>
-            );
-            }
 
-            return (
+                {renderCombinedReservation(
+                  combined23,
+                  "w-52"
+                )}
+              </>
+            );
+          }
+
+          return (
             <>
-                {renderSingleSeat(1)}
-                {renderSingleSeat(2)}
-                {renderSingleSeat(3)}
+              {renderSingleSeat(1)}
+              {renderSingleSeat(2)}
+              {renderSingleSeat(3)}
             </>
-            );
+          );
         })()}
       </div>
 
@@ -201,63 +308,75 @@ export default function SeatLayout({
         <div className="h-24 w-24"></div>
 
         {(() => {
-            const combined56 = reservations.find(
-            (reservation) =>
-                isCombinedReservation(reservation) &&
-                hasSameSeats(reservation, [5, 6])
+          const combined56 =
+            reservations.find(
+              (reservation) =>
+                isCombinedReservation(
+                  reservation
+                ) &&
+                hasSameSeats(
+                  reservation,
+                  [5, 6]
+                )
             );
 
-            if (combined56) {
+          if (combined56) {
             return renderCombinedReservation(
-                combined56,
-                "w-52"
+              combined56,
+              "w-52"
             );
-            }
+          }
 
-            return (
+          return (
             <>
-                {renderSingleSeat(5)}
-                {renderSingleSeat(6)}
+              {renderSingleSeat(5)}
+              {renderSingleSeat(6)}
             </>
-            );
+          );
         })()}
-        </div>
+      </div>
 
       <h2 className="mt-10 mb-4 text-2xl font-semibold">
         カウンター
       </h2>
 
       <div className="mb-10 flex gap-4">
-        {counterSeats.map((seat, index) => {
-            const reservation = reservations.find(
-            (reservation) => reservation.seat === seat
-            );
+        {counterSeats.map(
+          (seat, index) => {
+            const reservation = findReservationForSeat(seat);
+
+            const selected = isSwapMode
+              ? isSwapSelected(seat)
+              : selectedSeat === seat;
 
             return (
-            <div
+              <div
                 key={seat}
-                onClick={() => onSelectSeat(seat)}
+                onClick={() =>
+                  onSelectSeat(seat)
+                }
                 className={`flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-full text-white ${
-                selectedSeat === seat
+                  selected
                     ? "bg-blue-500"
                     : reservation
-                    ? "bg-orange-500"
-                    : "bg-green-500"
+                      ? "bg-orange-500"
+                      : "bg-green-500"
                 }`}
-            >
+              >
                 <div className="text-sm font-bold">
-                C{index + 1}
+                  C{index + 1}
                 </div>
 
                 {reservation && (
-                <div className="text-xs">
+                  <div className="text-xs">
                     {reservation.name}
-                </div>
+                  </div>
                 )}
-            </div>
+              </div>
             );
-          })}
-        </div>
+          }
+        )}
+      </div>
     </>
   );
 }

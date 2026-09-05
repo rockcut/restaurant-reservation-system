@@ -34,22 +34,65 @@ export default function ReservationForm({
   onSave,
   initialData,
 }: ReservationFormProps) {
-  
-const [plate, setPlate] = useState(initialData?.plate ?? "");
+  const [plate, setPlate] = useState(initialData?.plate ?? "");
 
-const [name, setName] = useState(initialData?.name ?? "");
-const [people, setPeople] = useState(initialData?.people ?? 1);
-const [time, setTime] = useState(initialData?.time ?? "");
+  const [name, setName] = useState(initialData?.name ?? "");
+  const [people, setPeople] = useState(initialData?.people ?? 1);
+  const [time, setTime] = useState(initialData?.time ?? "");
 
-const [course, setCourse] = useState(initialData?.course ?? "");
-const [allergy, setAllergy] = useState(initialData?.allergy ?? "");
-const [plateMessage, setPlateMessage] = useState(
-  initialData?.plateMessage ?? ""
-);
-const [phone, setPhone] = useState(initialData?.phone ?? "");
-const [note, setNote] = useState(initialData?.note ?? "");
+  const [course, setCourse] = useState(initialData?.course ?? "");
+  const [allergy, setAllergy] = useState(initialData?.allergy ?? "");
 
-    return (
+  const [plateMessage, setPlateMessage] = useState(
+    initialData?.plateMessage ?? ""
+  );
+
+  const [anniversaryNumber, setAnniversaryNumber] = useState("");
+
+  const [phone, setPhone] = useState(initialData?.phone ?? "");
+  const [note, setNote] = useState(initialData?.note ?? "");
+
+  const getOrdinalSuffix = (number: number) => {
+    const mod100 = number % 100;
+
+    if (mod100 >= 11 && mod100 <= 13) {
+      return "th";
+    }
+
+    switch (number % 10) {
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
+    }
+  };
+
+  const handleAnniversaryChange = (value: string) => {
+    setAnniversaryNumber(value);
+
+    if (value === "") {
+      setPlateMessage("Happy anniversary");
+      return;
+    }
+
+    const number = Number(value);
+
+    if (Number.isNaN(number)) {
+      return;
+    }
+
+    const suffix = getOrdinalSuffix(number);
+
+    setPlateMessage(
+      `Happy ${number}${suffix} anniversary`
+    );
+  };
+
+  return (
     <div className="mt-8 rounded-lg border bg-white p-6 shadow">
       <h2 className="mb-6 text-2xl font-bold">
         予約入力
@@ -65,7 +108,6 @@ const [note, setNote] = useState(initialData?.note ?? "");
         onChange={(e) => setName(e.target.value)}
         className="mb-4 w-full rounded-lg border px-4 py-2"
       />
-
 
       <label className="mb-2 block font-semibold">
         人数
@@ -86,7 +128,6 @@ const [note, setNote] = useState(initialData?.note ?? "");
         <option value={8}>8人</option>
         <option value={9}>9人</option>
         <option value={10}>10人</option>
-
       </select>
 
       <label className="mb-2 block font-semibold">
@@ -150,28 +191,29 @@ const [note, setNote] = useState(initialData?.note ?? "");
         </label>
       </div>
 
-        <label className="mb-2 block font-semibold">
-          苦手なもの・アレルギー
-        </label>
+      <label className="mb-2 block font-semibold">
+        苦手なもの・アレルギー
+      </label>
 
-        <textarea
-          rows={3}
-          value={allergy}
-          onChange={(e) => setAllergy(e.target.value)}
-          placeholder="例：甲殻類アレルギー、パクチーNG"
-          className="mb-4 w-full rounded-lg border px-4 py-2"
-        />
+      <textarea
+        rows={3}
+        value={allergy}
+        onChange={(e) => setAllergy(e.target.value)}
+        placeholder="例：甲殻類アレルギー、パクチーNG"
+        className="mb-4 w-full rounded-lg border px-4 py-2"
+      />
 
-        <label className="mb-2 block font-semibold">
-          お祝いプレートの有無
-        </label>
+      <label className="mb-2 block font-semibold">
+        お祝いプレートの有無
+      </label>
 
-        <div className="mb-4 space-y-2">
-          <label className="flex items-center gap-2">
-            <input
+      <div className="mb-4 space-y-2">
+        <label className="flex items-center gap-2">
+          <input
             type="radio"
             name="plate"
             value="希望する"
+            checked={plate === "希望する"}
             onChange={(e) => setPlate(e.target.value)}
           />
           希望する
@@ -182,27 +224,101 @@ const [note, setNote] = useState(initialData?.note ?? "");
             type="radio"
             name="plate"
             value="希望しない"
-            onChange={(e) => setPlate(e.target.value)}          
+            checked={plate === "希望しない"}
+            onChange={(e) => setPlate(e.target.value)}
           />
           希望しない
+        </label>
+      </div>
+
+      {plate === "希望する" && (
+        <>
+          <label className="mb-2 block font-semibold">
+            よく使うフレーズ
           </label>
-        </div>
 
-        {plate === "希望する" && (
-          <>
-            <label className="mb-2 block font-semibold">
-              プレートメッセージ
-            </label>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPlateMessage("Happy Birthday");
+                setAnniversaryNumber("");
+              }}
+              className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
+            >
+              Happy Birthday
+            </button>
 
-            <textarea
-              rows={2}
-              value={plateMessage}
-              onChange={(e) => setPlateMessage(e.target.value)}
-              placeholder="例：Happy Birthday ○○"
-              className="mb-4 w-full rounded-lg border px-4 py-2"
-            />
-          </>
-        )}
+            <button
+              type="button"
+              onClick={() => {
+                setPlateMessage("Bon Mariage");
+                setAnniversaryNumber("");
+              }}
+              className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
+            >
+              Bon Mariage
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPlateMessage("Happy Wedding");
+                setAnniversaryNumber("");
+              }}
+              className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
+            >
+              Happy Wedding
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPlateMessage("Happy anniversary");
+                setAnniversaryNumber("");
+              }}
+              className="rounded-lg bg-gray-200 px-4 py-2 hover:bg-gray-300"
+            >
+              Anniversary
+            </button>
+          </div>
+
+          {plateMessage.toLowerCase().includes("anniversary") && (
+            <div className="mb-4">
+              <label className="mb-2 block font-semibold">
+                周年数
+              </label>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  value={anniversaryNumber}
+                  onChange={(e) =>
+                    handleAnniversaryChange(e.target.value)
+                  }
+                  placeholder="例：10"
+                  className="w-32 rounded-lg border px-4 py-2"
+                />
+
+                <span>周年</span>
+              </div>
+            </div>
+          )}
+
+          <label className="mb-2 block font-semibold">
+            プレートメッセージ
+          </label>
+
+          <textarea
+            rows={2}
+            value={plateMessage}
+            onChange={(e) => setPlateMessage(e.target.value)}
+            placeholder="例：Happy Birthday ○○"
+            className="mb-4 w-full rounded-lg border px-4 py-2"
+          />
+        </>
+      )}
 
       <label className="mb-2 block font-semibold">
         電話番号
@@ -215,49 +331,47 @@ const [note, setNote] = useState(initialData?.note ?? "");
         className="mb-4 w-full rounded-lg border px-4 py-2"
       />
 
-        <label className="mb-2 block font-semibold">
-         備考
-        </label>
+      <label className="mb-2 block font-semibold">
+        備考
+      </label>
 
-        <textarea
-          rows={4}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="その他、お客様からのご要望など"
-          className="mb-4 w-full rounded-lg border px-4 py-2"
-        />
+      <textarea
+        rows={4}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="その他、お客様からのご要望など"
+        className="mb-4 w-full rounded-lg border px-4 py-2"
+      />
 
-        <div className="mt-6 flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-lg bg-gray-300 px-6 py-2 hover:bg-gray-400"
-          >
-             キャンセル
-          </button>
+      <div className="mt-6 flex justify-end gap-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg bg-gray-300 px-6 py-2 hover:bg-gray-400"
+        >
+          キャンセル
+        </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              onSave({
-                name,
-                people,
-                time,
-                course,
-                allergy,
-                plate,
-                plateMessage,
-                phone,
-                note,
-              })
-            }
-            className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
-          >
-            保存
-          </button>
-        </div>
-
+        <button
+          type="button"
+          onClick={() =>
+            onSave({
+              name,
+              people,
+              time,
+              course,
+              allergy,
+              plate,
+              plateMessage,
+              phone,
+              note,
+            })
+          }
+          className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+        >
+          保存
+        </button>
+      </div>
     </div>
-
   );
 }

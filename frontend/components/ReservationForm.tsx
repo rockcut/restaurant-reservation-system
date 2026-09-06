@@ -92,6 +92,21 @@ export default function ReservationForm({
     );
   };
 
+  // 17:00〜22:00の時間を10分刻みで生成
+  const timeOptions: string[] = [];
+
+  for (let hour = 17; hour <= 22; hour++) {
+    for (let minute = 0; minute < 60; minute += 10) {
+      if (hour === 22 && minute > 0) {
+        break;
+      }
+
+      timeOptions.push(
+        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
+      );
+    }
+  }
+
   return (
     <div className="mt-8 rounded-lg border bg-white p-6 shadow">
       <h2 className="mb-6 text-2xl font-bold">
@@ -134,12 +149,19 @@ export default function ReservationForm({
         来店時刻
       </label>
 
-      <input
-        type="time"
+      <select
         value={time}
         onChange={(e) => setTime(e.target.value)}
         className="mb-4 w-full rounded-lg border px-4 py-2"
-      />
+      >
+        <option value="">時間を選択</option>
+
+        {timeOptions.map((timeOption) => (
+          <option key={timeOption} value={timeOption}>
+            {timeOption}
+          </option>
+        ))}
+      </select>
 
       <label className="mb-2 block font-semibold">
         コース

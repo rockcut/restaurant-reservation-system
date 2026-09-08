@@ -23,6 +23,8 @@ type Reservation = {
   note: string | null;
 };
 
+type UserRole = "editor" | "viewer";
+
 const getTodayString = () => {
   const today = new Date();
 
@@ -39,10 +41,15 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedDate, setSelectedDate] = useState(getTodayString());
+
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   const [editingReservation, setEditingReservation] =
     useState<Reservation | null>(null);
+
+  // editorだけ編集可能
+  const canEdit = userRole === "editor";
 
   // ==========================
   // 席交換モード
@@ -68,6 +75,10 @@ export default function Home() {
 
   const router = useRouter();
 
+  // ==========================
+  // ログイン確認・権限取得
+  // ==========================
+
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -80,11 +91,41 @@ export default function Home() {
         return;
       }
 
+      const {
+        data: profile,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error(
+          "Profile fetch error:",
+          profileError.message
+        );
+
+        // 権限取得に失敗した場合は
+        // 安全のためviewerとして扱う
+        setUserRole("viewer");
+      } else {
+        setUserRole(
+          profile.role === "editor"
+            ? "editor"
+            : "viewer"
+        );
+      }
+
       setIsAuthChecked(true);
     };
 
     checkUser();
   }, [router]);
+
+  // ==========================
+  // フォーム表示時スクロール
+  // ==========================
 
   useEffect(() => {
     if (!showForm) return;
@@ -96,6 +137,10 @@ export default function Home() {
       });
     });
   }, [showForm]);
+
+  // ==========================
+  // 予約取得
+  // ==========================
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -208,6 +253,7 @@ export default function Home() {
   // ==========================
 
   const handleDeleteReservation = async () => {
+    if (!canEdit) return;
     if (!selectedReservation) return;
 
     const confirmed = window.confirm(
@@ -247,6 +293,8 @@ export default function Home() {
     // ==========================
 
     if (isSwapMode) {
+      if (!canEdit) return;
+
       // 2席交換では席UIから個別席は選択しない
       // 1+2 / 2+3 / 5+6 のボタンから選択する
       if (swapModeType === "double") {
@@ -367,6 +415,8 @@ export default function Home() {
   // ==========================
 
   const handleConfirmSwap = async () => {
+    if (!canEdit) return;
+
     if (swapSeatA === null || swapSeatB === null) {
       return;
     }
@@ -526,6 +576,8 @@ export default function Home() {
   // ==========================
 
   const handleConfirmDoubleSwap = async () => {
+    if (!canEdit) return;
+
     if (!swapBlockA || !swapBlockB) {
       return;
     }
@@ -657,8 +709,6 @@ export default function Home() {
 
     if (!confirmed) return;
 
-    // 現段階では既存の1席交換RPCを
-    // 2回利用する
     const { error: swapError } = await supabase.rpc(
       "swap_reservation_seat_blocks",
       {
@@ -749,6 +799,9 @@ export default function Home() {
     setSwapBlockA(null);
     setSwapBlockB(null);
 
+    setShowForm(false);
+    setEditingReservation(null);
+
     setSelectedDate(date);
   };
 
@@ -757,6 +810,8 @@ export default function Home() {
   // ==========================
 
   const handleStartSwap = () => {
+    if (!canEdit) return;
+
     setSelectedSeat(null);
     setSelectedSeats([]);
 
@@ -858,6 +913,7 @@ export default function Home() {
         selectedSeats={selectedSeats}
         onSelectSeat={handleSelectSeat}
         isSwapMode={
+          canEdit &&
           isSwapMode &&
           swapModeType === "single"
         }
@@ -869,7 +925,7 @@ export default function Home() {
           席交換モード
       ========================== */}
 
-      {isSwapMode && (
+      {canEdit && isSwapMode && (
         <div className="mb-6 mt-6 rounded-lg border border-purple-300 bg-white p-4 shadow">
 
           <h2 className="mb-3 text-xl font-bold">
@@ -1017,7 +1073,6 @@ export default function Home() {
                           return;
                         }
 
-                        // 交換先を変更するとき
                         const overlaps =
                           swapBlockA.some(
                             (seat) =>
@@ -1132,52 +1187,55 @@ export default function Home() {
             />
           )}
 
-          <div className="mb-6 flex gap-2">
+          {/* editorだけ編集ボタンを表示 */}
+          {canEdit && (
+            <div className="mb-6 flex gap-2">
 
-            {selectedReservation && (
-              <>
-                <button
-                  onClick={
-                    handleDeleteReservation
-                  }
-                  className="rounded-lg bg-red-600 px-6 py-3 text-lg text-white hover:bg-red-700"
-                >
-                  予約を削除
-                </button>
+              {selectedReservation && (
+                <>
+                  <button
+                    onClick={
+                      handleDeleteReservation
+                    }
+                    className="rounded-lg bg-red-600 px-6 py-3 text-lg text-white hover:bg-red-700"
+                  >
+                    予約を削除
+                  </button>
 
-                <button
-                  onClick={() => {
-                    setEditingReservation(
-                      selectedReservation
-                    );
+                  <button
+                    onClick={() => {
+                      setEditingReservation(
+                        selectedReservation
+                      );
 
-                    setShowForm(true);
-                  }}
-                  className="rounded-lg bg-yellow-500 px-6 py-3 text-lg text-white hover:bg-yellow-600"
-                >
-                  予約を変更
-                </button>
-              </>
-            )}
+                      setShowForm(true);
+                    }}
+                    className="rounded-lg bg-yellow-500 px-6 py-3 text-lg text-white hover:bg-yellow-600"
+                  >
+                    予約を変更
+                  </button>
+                </>
+              )}
 
-            <button
-              onClick={() => {
-                setEditingReservation(null);
-                setShowForm(true);
-              }}
-              className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700"
-            >
-              ＋予約を追加
-            </button>
+              <button
+                onClick={() => {
+                  setEditingReservation(null);
+                  setShowForm(true);
+                }}
+                className="rounded-lg bg-blue-600 px-6 py-3 text-lg text-white hover:bg-blue-700"
+              >
+                ＋予約を追加
+              </button>
 
-            <button
-              type="button"
-              onClick={handleStartSwap}
-              className="rounded-lg bg-purple-600 px-6 py-3 text-lg text-white hover:bg-purple-700"
-            >
-              席を交換
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={handleStartSwap}
+                className="rounded-lg bg-purple-600 px-6 py-3 text-lg text-white hover:bg-purple-700"
+              >
+                席を交換
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -1185,7 +1243,7 @@ export default function Home() {
           予約フォーム
       ========================== */}
 
-      {showForm && !isSwapMode && (
+      {canEdit && showForm && !isSwapMode && (
         <div ref={formRef}>
 
           <ReservationForm
@@ -1233,8 +1291,8 @@ export default function Home() {
             }
 
             onSave={async (data) => {
-              if (selectedSeat === null)
-                return;
+              if (!canEdit) return;
+              if (selectedSeat === null) return;
 
               const timeValue =
                 data.time || null;

@@ -20,12 +20,20 @@ type Reservation = {
   note: string | null;
 };
 
+// ひらがなをカタカナに変換
+const normalizeKana = (text: string) => {
+  return text.replace(/[\u3041-\u3096]/g, (char) =>
+    String.fromCharCode(char.charCodeAt(0) + 0x60)
+  );
+};
+
 export default function SearchPage() {
   const [keyword, setKeyword] = useState("");
   const [results, setResults] = useState<Reservation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const router = useRouter();
+
   const [selectedReservation, setSelectedReservation] =
     useState<Reservation | null>(null);
 
@@ -52,9 +60,6 @@ export default function SearchPage() {
           seat
         )
       `)
-      .or(
-        `name.ilike.%${trimmedKeyword}%,phone.ilike.%${trimmedKeyword}%`
-      )
       .order("reservation_date", { ascending: false })
       .order("time", { ascending: false });
 
@@ -67,17 +72,38 @@ export default function SearchPage() {
       return;
     }
 
-    const formattedResults = data.map((reservation) => ({
-      ...reservation,
-      seats: reservation.reservation_seats.map(
-        (item: { seat: number }) => item.seat
-      ),
-    }));
+    const normalizedKeyword = normalizeKana(trimmedKeyword);
+
+    const filteredData = data.filter((reservation) => {
+      const normalizedName = normalizeKana(
+        reservation.name ?? ""
+      );
+
+      const nameMatches =
+        normalizedName.includes(normalizedKeyword);
+
+      const phoneMatches =
+        reservation.phone?.includes(trimmedKeyword) ??
+        false;
+
+      return nameMatches || phoneMatches;
+    });
+
+    const formattedResults = filteredData.map(
+      (reservation) => ({
+        ...reservation,
+        seats: reservation.reservation_seats.map(
+          (item: { seat: number }) => item.seat
+        ),
+      })
+    );
 
     setResults(formattedResults);
   };
 
-  const handleSelectReservation = (reservation: Reservation) => {
+  const handleSelectReservation = (
+    reservation: Reservation
+  ) => {
     setSelectedReservation(reservation);
 
     requestAnimationFrame(() => {
@@ -98,14 +124,13 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
-
       <button
         type="button"
         onClick={() => router.push("/")}
         className="mb-4 rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
-        >
+      >
         ← 予約管理に戻る
-        </button>
+      </button>
 
       <h1 className="mb-6 text-3xl font-bold">
         予約検索
@@ -144,11 +169,13 @@ export default function SearchPage() {
       )}
 
       {/* 検索結果なし */}
-      {searched && !isSearching && results.length === 0 && (
-        <p className="text-gray-600">
-          該当する予約はありません
-        </p>
-      )}
+      {searched &&
+        !isSearching &&
+        results.length === 0 && (
+          <p className="text-gray-600">
+            該当する予約はありません
+          </p>
+        )}
 
       {/* 検索結果 */}
       {!isSearching && results.length > 0 && (
@@ -162,7 +189,9 @@ export default function SearchPage() {
               <button
                 key={reservation.id}
                 type="button"
-                onClick={() => handleSelectReservation(reservation)}
+                onClick={() =>
+                  handleSelectReservation(reservation)
+                }
                 className="w-full rounded-lg bg-white p-4 text-left shadow hover:bg-gray-50"
               >
                 <div className="text-lg font-bold">
@@ -190,9 +219,13 @@ export default function SearchPage() {
                     ? reservation.seats
                         .slice()
                         .sort((a, b) => a - b)
-                        .map((seat) => getSeatLabel(seat))
+                        .map((seat) =>
+                          getSeatLabel(seat)
+                        )
                         .join("・")
-                    : getSeatLabel(reservation.seat)}
+                    : getSeatLabel(
+                        reservation.seat
+                      )}
                 </div>
               </button>
             ))}
@@ -212,54 +245,76 @@ export default function SearchPage() {
 
           <div className="space-y-2">
             <p>
-              <span className="font-semibold">予約者：</span>
+              <span className="font-semibold">
+                予約者：
+              </span>
               {selectedReservation.name}
             </p>
 
             <p>
-              <span className="font-semibold">来店日：</span>
+              <span className="font-semibold">
+                来店日：
+              </span>
               {selectedReservation.reservation_date}
             </p>
 
             <p>
-              <span className="font-semibold">時間：</span>
+              <span className="font-semibold">
+                時間：
+              </span>
               {selectedReservation.time}
             </p>
 
             <p>
-              <span className="font-semibold">人数：</span>
+              <span className="font-semibold">
+                人数：
+              </span>
               {selectedReservation.people}名
             </p>
 
             <p>
-              <span className="font-semibold">席：</span>
+              <span className="font-semibold">
+                席：
+              </span>
               {selectedReservation.seats &&
               selectedReservation.seats.length > 0
                 ? selectedReservation.seats
                     .slice()
                     .sort((a, b) => a - b)
-                    .map((seat) => getSeatLabel(seat))
+                    .map((seat) =>
+                      getSeatLabel(seat)
+                    )
                     .join("・")
-                : getSeatLabel(selectedReservation.seat)}
+                : getSeatLabel(
+                    selectedReservation.seat
+                  )}
             </p>
 
             <p>
-              <span className="font-semibold">電話番号：</span>
+              <span className="font-semibold">
+                電話番号：
+              </span>
               {selectedReservation.phone || "なし"}
             </p>
 
             <p>
-              <span className="font-semibold">コース：</span>
+              <span className="font-semibold">
+                コース：
+              </span>
               {selectedReservation.course || "なし"}
             </p>
 
             <p>
-              <span className="font-semibold">アレルギー：</span>
+              <span className="font-semibold">
+                アレルギー：
+              </span>
               {selectedReservation.allergy || "なし"}
             </p>
 
             <p>
-              <span className="font-semibold">プレート：</span>
+              <span className="font-semibold">
+                プレート：
+              </span>
               {selectedReservation.plate || "なし"}
             </p>
 
@@ -267,11 +322,14 @@ export default function SearchPage() {
               <span className="font-semibold">
                 プレートメッセージ：
               </span>
-              {selectedReservation.plate_message || "なし"}
+              {selectedReservation.plate_message ||
+                "なし"}
             </p>
 
             <p>
-              <span className="font-semibold">備考：</span>
+              <span className="font-semibold">
+                備考：
+              </span>
               {selectedReservation.note || "なし"}
             </p>
           </div>

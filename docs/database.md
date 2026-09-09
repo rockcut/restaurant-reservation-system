@@ -114,10 +114,11 @@ reservation_id | seat
 
 ## 主なカラム
 
-| カラム名 | 説明 |
-|---|---|
-| reservation_id | `reservations.id` に対応する予約ID |
-| seat | 席番号 |
+| カラム名 | 型 | 説明 |
+|---|---|---|
+| id | bigint | 席割り当てID |
+| reservation_id | bigint | `reservations.id` に対応する予約ID |
+| seat | bigint | 席番号 |
 
 ---
 

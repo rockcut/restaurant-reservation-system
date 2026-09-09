@@ -333,6 +333,28 @@ export default function Home() {
     // 通常モード
     // ==========================
 
+    // 予約済みの席なら、予約詳細の確認を優先する
+    const reservation = findReservationBySeat(seat);
+
+    if (reservation) {
+      const reservationSeats =
+        reservation.seats && reservation.seats.length > 0
+          ? [...reservation.seats].sort((a, b) => a - b)
+          : [reservation.seat];
+
+      setSelectedSeat(seat);
+      setSelectedSeats(reservationSeats);
+
+      setShowForm(false);
+      setEditingReservation(null);
+
+      return;
+    }
+
+    // ==========================
+    // ここから空席の選択
+    // ==========================
+
     // カウンター席
     if (seat >= 101) {
       if (selectedSeats.includes(seat)) {
@@ -349,11 +371,13 @@ export default function Home() {
     }
 
     setSelectedSeats((prev) => {
+      // カウンター席を選択中にテーブル席を押した場合
       if (prev.some((selectedSeat) => selectedSeat >= 101)) {
         setSelectedSeat(seat);
         return [seat];
       }
 
+      // 選択済みの空席をもう一度押した場合は解除
       if (prev.includes(seat)) {
         const nextSeats = prev.filter((s) => s !== seat);
 

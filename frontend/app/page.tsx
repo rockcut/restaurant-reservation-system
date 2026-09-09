@@ -917,6 +917,16 @@ export default function Home() {
 
           <button
             type="button"
+            onClick={() =>
+              router.push("/change-password")
+            }
+            className="rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+          >
+            パスワード変更
+          </button>
+
+          <button
+            type="button"
             onClick={handleLogout}
             className="rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
           >

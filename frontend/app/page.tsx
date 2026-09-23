@@ -48,6 +48,20 @@ export default function Home() {
   const [editingReservation, setEditingReservation] =
     useState<Reservation | null>(null);
 
+  // 別日移動モード
+  const [isTransferMode, setIsTransferMode] = useState(false);
+
+  // 移動先の日付
+  const [transferDate, setTransferDate] = useState(getTodayString());
+
+  // 移動先の日付の予約
+  const [transferReservations, setTransferReservations] =
+    useState<Reservation[]>([]);
+
+  // 移動先で選択した席
+  const [transferSelectedSeats, setTransferSelectedSeats] =
+    useState<number[]>([]);
+
   // editorだけ編集可能
   const canEdit = userRole === "editor";
 
@@ -172,6 +186,74 @@ export default function Home() {
     fetchReservations();
   }, [selectedDate]);
 
+  // ==========================
+  // 別日移動先の予約取得
+  // ==========================
+
+  useEffect(() => {
+    if (!isTransferMode) return;
+
+    const fetchTransferReservations = async () => {
+      const { data, error } = await supabase
+        .from("reservations")
+        .select(`
+          id,
+          seat,
+          name,
+          people,
+          time,
+          course,
+          allergy,
+          plate,
+          plate_message,
+          phone,
+          note,
+          reservation_date,
+          reservation_seats (
+            seat
+          )
+        `)
+        .eq("reservation_date", transferDate)
+        .order("time", { ascending: true });
+
+      if (error) {
+        console.error(
+          "Transfer reservation fetch error:",
+          error.message
+        );
+        return;
+      }
+
+      const formattedReservations: Reservation[] =
+        (data ?? []).map((reservation: any) => ({
+          id: reservation.id,
+          seat: reservation.seat,
+          seats:
+            reservation.reservation_seats?.map(
+              (seatData: { seat: number }) =>
+                seatData.seat
+            ) ?? [],
+          name: reservation.name,
+          people: reservation.people,
+          time: reservation.time ?? "",
+          course: reservation.course,
+          allergy: reservation.allergy,
+          plate: reservation.plate,
+          plate_message:
+            reservation.plate_message,
+          phone: reservation.phone,
+          note: reservation.note,
+        }));
+
+      setTransferReservations(
+        formattedReservations
+      );
+    };
+
+    fetchTransferReservations();
+  }, [isTransferMode, transferDate]);
+
+
   const seats = [1, 2, 3, 5, 6];
 
   const swappableBlocks = [
@@ -284,10 +366,203 @@ export default function Home() {
   };
 
   // ==========================
-  // 席選択
+  // 別日移動：移動元の席選択
   // ==========================
 
-  const handleSelectSeat = (seat: number) => {
+  const handleTransferSourceSeat = (seat: number) => {
+    if (!canEdit) return;
+    if (!selectedReservation) return;
+
+    const sourceSeats =
+      selectedReservation.seats &&
+      selectedReservation.seats.length > 0
+        ? [...selectedReservation.seats].sort(
+            (a, b) => a - b
+          )
+        : [selectedReservation.seat];
+
+    // 選択中の予約の席以外は選択できない
+    if (!sourceSeats.includes(seat)) {
+      return;
+    }
+
+    setSelectedSeat(seat);
+    setSelectedSeats(sourceSeats);
+  };
+
+  // ==========================
+  // 別日移動：移動先の席選択
+  // ==========================
+
+  const handleTransferDestinationSeat = (
+    seat: number
+  ) => {
+    if (!canEdit) return;
+    if (!selectedReservation) return;
+
+    // カウンター席は今回の移動対象外
+    if (seat >= 101) return;
+
+    const sourceSeats =
+      selectedReservation.seats &&
+      selectedReservation.seats.length > 0
+        ? selectedReservation.seats
+        : [selectedReservation.seat];
+
+    // 移動先ですでに予約されている席は選択不可
+    const occupiedReservation =
+      transferReservations.find((reservation) => {
+        const reservationSeats =
+          reservation.seats &&
+          reservation.seats.length > 0
+            ? reservation.seats
+            : [reservation.seat];
+
+        return reservationSeats.includes(seat);
+      });
+
+    if (occupiedReservation) {
+      return;
+    }
+
+    setTransferSelectedSeats((prev) => {
+      // すでに選択している席なら解除
+      if (prev.includes(seat)) {
+        return prev.filter(
+          (selectedSeat) => selectedSeat !== seat
+        );
+      }
+
+      const nextSeats = [...prev, seat].sort(
+        (a, b) => a - b
+      );
+
+      // 移動元と同じ席数まで
+      if (nextSeats.length > sourceSeats.length) {
+        return prev;
+      }
+
+      // 既存の席組み合わせルールを使用
+      if (!isValidSeatCombination(nextSeats)) {
+        return prev;
+      }
+
+      return nextSeats;
+    });
+  };
+
+  // ==========================
+  // 別日移動：確定
+  // ==========================
+
+  const handleConfirmTransfer = async () => {
+    if (!canEdit) return;
+    if (!selectedReservation) return;
+
+    const sourceDate = selectedDate;
+    const destinationDate = transferDate;
+
+    if (sourceDate === destinationDate) {
+      alert("移動元と移動先の日付を別の日にしてください。");
+      return;
+    }
+
+    const sourceSeats =
+      selectedReservation.seats &&
+      selectedReservation.seats.length > 0
+        ? [...selectedReservation.seats].sort(
+            (a, b) => a - b
+          )
+        : [selectedReservation.seat];
+
+    const destinationSeats =
+      [...transferSelectedSeats].sort(
+        (a, b) => a - b
+      );
+
+    if (destinationSeats.length === 0) {
+      alert("移動先の席を選択してください。");
+      return;
+    }
+
+    if (
+      sourceSeats.length !==
+      destinationSeats.length
+    ) {
+      alert(
+        "移動元と移動先の席数を一致させてください。"
+      );
+      return;
+    }
+
+    if (!isValidSeatCombination(destinationSeats)) {
+      alert("移動先の席の組み合わせが無効です。");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `${sourceDate}の予約を${destinationDate}へ移動しますか？`
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase.rpc(
+      "move_reservation_to_date",
+      {
+        p_reservation_id:
+          selectedReservation.id,
+        p_source_date: sourceDate,
+        p_destination_date:
+          destinationDate,
+        p_destination_seats:
+          destinationSeats,
+      }
+    );
+
+    if (error) {
+      console.error(
+        "Reservation transfer error:",
+        error.message
+      );
+
+      console.error(
+        "Reservation transfer details:",
+        error.details
+      );
+
+      console.error(
+        "Reservation transfer hint:",
+        error.hint
+      );
+
+      alert(
+        `予約の移動に失敗しました。\n${error.message}`
+      );
+
+      return;
+    }
+
+    alert("予約を別の日付へ移動しました。");
+
+    setIsTransferMode(false);
+    setTransferSelectedSeats([]);
+    setTransferReservations([]);
+
+    setSelectedSeat(null);
+    setSelectedSeats([]);
+    setShowForm(false);
+    setEditingReservation(null);
+
+    // 移動先の日付へ移動
+    setSelectedDate(destinationDate);
+  };
+
+    // ==========================
+    // 席選択
+    // ==========================
+
+    const handleSelectSeat = (seat: number) => {
+
     // ==========================
     // 席交換モード
     // ==========================
@@ -946,14 +1221,123 @@ export default function Home() {
         selectedSeat={selectedSeat}
         selectedSeats={selectedSeats}
         onSelectSeat={handleSelectSeat}
-        isSwapMode={
-          canEdit &&
-          isSwapMode &&
-          swapModeType === "single"
-        }
-        swapSeatA={swapSeatA}
-        swapSeatB={swapSeatB}
+        isSwapMode={false}
+        swapSeatA={null}
+        swapSeatB={null}
+        showCounter={false}
       />
+
+    {/* ==========================
+        別日移動モード
+    ========================== */}
+
+    {canEdit && isTransferMode && (
+      <div className="mt-6 rounded-lg border border-green-300 bg-white p-6 shadow">
+
+        <h2 className="mb-6 text-2xl font-bold">
+          別日に移動
+        </h2>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+
+          {/* ==========================
+              移動元
+          ========================== */}
+
+          <div>
+            <h3 className="mb-4 text-xl font-semibold">
+              移動元：{selectedDate}
+            </h3>
+
+            <SeatLayout
+              seats={seats}
+              reservations={reservations}
+              selectedSeat={selectedSeat}
+              selectedSeats={selectedSeats}
+              onSelectSeat={handleTransferSourceSeat}
+              isSwapMode={false}
+              swapSeatA={null}
+              swapSeatB={null}
+              showCounter={false}
+            />
+          </div>
+
+          {/* ==========================
+              移動先
+          ========================== */}
+
+          <div>
+            <h3 className="mb-4 text-xl font-semibold">
+              移動先
+            </h3>
+
+            <input
+              type="date"
+              value={transferDate}
+              onChange={(e) => {
+                setTransferDate(e.target.value);
+                setTransferSelectedSeats([]);
+              }}
+              className="mb-4 rounded-lg border px-4 py-2 text-lg"
+            />
+
+            <SeatLayout
+              seats={seats}
+              reservations={transferReservations}
+              selectedSeat={
+                transferSelectedSeats.length > 0
+                  ? transferSelectedSeats[
+                      transferSelectedSeats.length - 1
+                    ]
+                  : null
+              }
+              selectedSeats={
+                transferSelectedSeats
+              }
+              onSelectSeat={
+                handleTransferDestinationSeat
+              }
+              isSwapMode={false}
+              swapSeatA={null}
+              swapSeatB={null}
+              showCounter={false}
+            />
+          </div>
+
+        </div>
+
+      {/* ==========================
+          キャンセル / 確定
+      ========================== */}
+
+      <div className="mt-6 flex gap-2">
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsTransferMode(false);
+            setTransferSelectedSeats([]);
+          }}
+          className="rounded-lg bg-gray-500 px-6 py-3 text-lg text-white hover:bg-gray-600"
+        >
+          キャンセル
+        </button>
+
+        <button
+          type="button"
+          onClick={handleConfirmTransfer}
+          disabled={
+            transferSelectedSeats.length === 0
+          }
+          className="rounded-lg bg-green-600 px-6 py-3 text-lg text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          この内容で移動
+        </button>
+
+      </div>
+
+    </div>
+  )}
 
       {/* ==========================
           席交換モード
@@ -1247,6 +1631,20 @@ export default function Home() {
                     className="rounded-lg bg-yellow-500 px-6 py-3 text-lg text-white hover:bg-yellow-600"
                   >
                     予約を変更
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (!selectedReservation) return;
+
+                      setIsTransferMode(true);
+                      setTransferDate(selectedDate);
+                      setShowForm(false);
+                      setEditingReservation(null);
+                    }}
+                    className="rounded-lg bg-green-600 px-6 py-3 text-lg text-white hover:bg-green-700"
+                  >
+                    別日に移動
                   </button>
                 </>
               )}

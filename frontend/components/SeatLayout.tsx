@@ -7,6 +7,7 @@ type Reservation = {
   name: string;
   people: number;
   time: string;
+  plate: string | null;
 };
 
 type SeatLayoutProps = {
@@ -108,6 +109,9 @@ export default function SeatLayout({
     const reservation =
       findReservationForSeat(seat);
 
+    const isPlateReservation =
+      reservation?.plate === "希望する";
+
     const isSelected = isSwapMode
       ? isSwapSelected(seat)
       : selectedSeats.includes(seat);
@@ -122,6 +126,10 @@ export default function SeatLayout({
             : reservation
               ? "bg-orange-500"
               : "bg-green-500"
+        } ${
+          isPlateReservation
+            ? "border-4 border-red-500"
+            : ""
         }`}
       >
         <div className="text-lg font-bold">
@@ -153,7 +161,10 @@ export default function SeatLayout({
     )
       .slice()
       .sort((a, b) => a - b);
-
+      
+    const isPlateReservation =
+      reservation.plate === "希望する";
+      
     // ==========================
     // 席交換モード
     // ==========================
@@ -220,10 +231,15 @@ export default function SeatLayout({
             );
           }
         }}
+
         className={`flex h-24 ${widthClass} cursor-pointer flex-col items-center justify-center rounded-lg text-white ${
           isSelected
             ? "bg-blue-500"
             : "bg-orange-500"
+        } ${
+          isPlateReservation
+            ? "border-4 border-red-500"
+            : ""
         }`}
       >
         <div className="text-lg font-bold">

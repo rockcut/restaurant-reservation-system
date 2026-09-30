@@ -609,22 +609,37 @@ export default function Home() {
     // ==========================
 
     // 予約済みの席なら、予約詳細の確認を優先する
-    const reservation = findReservationBySeat(seat);
+const reservation = findReservationBySeat(seat);
 
-    if (reservation) {
-      const reservationSeats =
-        reservation.seats && reservation.seats.length > 0
-          ? [...reservation.seats].sort((a, b) => a - b)
-          : [reservation.seat];
+if (reservation) {
+  const reservationSeats =
+    reservation.seats && reservation.seats.length > 0
+      ? [...reservation.seats].sort((a, b) => a - b)
+      : [reservation.seat];
 
-      setSelectedSeat(seat);
-      setSelectedSeats(reservationSeats);
+  // すでにこの予約が選択中なら選択解除
+  const isAlreadySelected =
+    reservationSeats.some((selectedSeat) =>
+      selectedSeats.includes(selectedSeat)
+    );
 
-      setShowForm(false);
-      setEditingReservation(null);
+  if (isAlreadySelected) {
+    setSelectedSeat(null);
+    setSelectedSeats([]);
+    setShowForm(false);
+    setEditingReservation(null);
+    return;
+  }
 
-      return;
-    }
+  // 予約済み席を選択
+  setSelectedSeat(seat);
+  setSelectedSeats(reservationSeats);
+
+  setShowForm(false);
+  setEditingReservation(null);
+
+  return;
+}
 
     // ==========================
     // ここから空席の選択

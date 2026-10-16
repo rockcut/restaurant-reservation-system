@@ -1910,6 +1910,7 @@ if (reservation) {
                   seat:
                     selectedSeat,
                     
+                  received_by: data.receivedBy,
 
                   name:
                     data.name,

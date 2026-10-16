@@ -21,6 +21,8 @@ type Reservation = {
   plate_message: string | null;
   phone: string | null;
   note: string | null;
+  received_by: string | null;
+  created_at: string | null;
 };
 
 type UserRole = "editor" | "viewer";
@@ -1907,6 +1909,7 @@ if (reservation) {
                 .insert({
                   seat:
                     selectedSeat,
+                    
 
                   name:
                     data.name,

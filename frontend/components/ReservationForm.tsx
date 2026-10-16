@@ -51,6 +51,7 @@ export default function ReservationForm({
 
   const [phone, setPhone] = useState(initialData?.phone ?? "");
   const [note, setNote] = useState(initialData?.note ?? "");
+  const [receivedBy, setReceivedBy] = useState("");
 
   const getOrdinalSuffix = (number: number) => {
     const mod100 = number % 100;
@@ -112,6 +113,28 @@ export default function ReservationForm({
       <h2 className="mb-6 text-2xl font-bold">
         予約入力
       </h2>
+
+      {!initialData && (
+        <>
+          <label className="mb-2 block font-semibold">
+            受付担当者（必須）
+          </label>
+
+          <select
+            value={receivedBy}
+            onChange={(e) => setReceivedBy(e.target.value)}
+            className="mb-4 w-full rounded-lg border px-4 py-2"
+          >
+            <option value="">受付担当者を選択</option>
+            <option value="まゆみ">まゆみ</option>
+            <option value="あずき">あずき</option>
+            <option value="はるか">はるか</option>
+            <option value="さくら">さくら</option>
+            <option value="りゅうのすけ">りゅうのすけ</option>
+            <option value="大西">大西</option>
+          </select>
+        </>
+      )}
 
       <label className="mb-2 block font-semibold">
         予約者名
@@ -387,8 +410,12 @@ export default function ReservationForm({
               plateMessage,
               phone,
               note,
+              receivedBy,
             })
           }
+
+          disabled={!initialData && !receivedBy}
+
           className="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
         >
           保存

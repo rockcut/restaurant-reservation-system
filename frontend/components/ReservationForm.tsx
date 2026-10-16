@@ -14,6 +14,7 @@ type ReservationFormProps = {
     plateMessage: string;
     phone: string;
     note: string;
+    receivedBy: string;
   }) => void;
 
   initialData?: {

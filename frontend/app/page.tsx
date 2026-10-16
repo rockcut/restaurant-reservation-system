@@ -245,6 +245,8 @@ export default function Home() {
             reservation.plate_message,
           phone: reservation.phone,
           note: reservation.note,
+          received_by: reservation.received_by ?? null,
+          created_at: reservation.created_at ?? null,
         }));
 
       setTransferReservations(
